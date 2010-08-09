@@ -1,0 +1,55 @@
+
+#-- SITE COLLECTIONS: While a Fadelisk "site" is a directory containing 
+#   subdirectories of configuration files, content, and other data for
+#   a single web site, a "site collection" is a directory which contains
+#   one or more Fadelisk sites. When Fadelisk is started, each site
+#   collection is scanned for sites to bring online. It is recommended
+#   that you consider using the default location if you can. Placing
+#   services into /srv provides flexibility in directory layout, allows
+#   modularization of mounted file systems, make backups easier, and
+#   is compatible with the File Heirarchy Standard as observed on 
+#   modern systems. An example directory layout might look like this:
+#
+#   /srv
+#     /db  -------.
+#     /samba      |
+#       /share_1  }-- Other services which might be located on /srv
+#     /vcs        |
+#       /git -----'
+#     /www - directory for the WWW service
+#       /bin - scripts and binaries specific to web service
+#       /log - log files for each site, if kept separate
+#       /site - directory in which sites are placed
+#         /www.example.com - an example site
+#           /etc - configuration files specific to this site
+#           /content - web content for this site
+#           /lib - library files specific to this site
+#           /tmp - temporary files such as cached objects
+#
+#   It is also suggested that the directory for each individual site be
+#   named with the canonical FQDN of that web host, or if each FQDN is
+#   equally canonical, the most commonly known name.
+#   default: []
+site_collections:
+    - "/srv/www/site"
+
+#-- EXTRA LIBRARIES: Directories with other Python modules to be appended
+#   to sys.path
+#   default: []
+extra_libraries:
+    - "/srv/www/site/lib/python"
+
+#-- TEMPLATES: Directories with heirarchies of mako templates. These will
+#   be searched in order for a template at a given path.
+#   default: []
+template_directories:
+    - "/srv/project/fadelisk/template"
+
+#-- BIND ADDRESS:
+#   default: "0.0.0.0"
+# bind_address: "0.0.0.0"
+
+#-- LISTEN PORT:
+#   default: 1066
+# listen_port: "1066"
+
