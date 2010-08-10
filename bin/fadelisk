@@ -3,8 +3,8 @@
 import sys
 
 sys.path.append("/srv/project/fadelisk/lib/python")
-
 sys.dont_write_bytecode = True
+
 import fadelisk
 
 fadelisk.begins()

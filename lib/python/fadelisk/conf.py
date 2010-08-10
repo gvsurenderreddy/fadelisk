@@ -12,22 +12,16 @@ class ConfFormatError(Exception):
      def __init__(self, *args):
          Exception.__init__(self, *args)
 
-
-
-class ConfYAML(object):
-    def __init__(self, filename):
-        self.filename = filename
-        self.timestamp = None
-        self.data = None
-        self.refresh()
+class ConfDict(object):
+    def __init__(self):
+        self.data = {}
 
     def __getitem__(self, key):
-        self.refresh()
         if self.data.has_key(key):
             return self.data[key]
         return None
 
-    def __repr__(self):
+    def __str__(self):
         return str(self.data)
 
     def soft_set(self, key, value):
@@ -37,6 +31,17 @@ class ConfYAML(object):
     def soft_update(self, data):
         for (key, value) in data:
             self.soft_set(key, value)
+
+class ConfYAML(ConfDict):
+    def __init__(self, filename):
+        ConfDict.__init__(self)
+        self.filename = filename
+        self.timestamp = None
+        self.refresh()
+
+    def __getitem__(self, key):
+        self.refresh()
+        return ConfDict.__getitem__(self, key)
 
     def refresh(self):
         mtime = os.stat(self.filename).st_mtime
@@ -46,29 +51,17 @@ class ConfYAML(object):
             self.timestamp = mtime
 
 
-class ConfJSON(object):
+class ConfJSON(ConfDict):
     def __init__(self, filename):
+        ConfDict.__init__(self)
         self.filename = filename
         self.timestamp = None
-        self.data = None
         self.refresh()
 
     def __getitem__(self, key):
         self.refresh()
-        if self.data.has_key(key):
-            return self.data[key]
-        return None
+        return ConfDict.__getitem__(self, key)
 
-    def __repr__(self):
-        return str(self.data)
-
-    def soft_set(self, key, value):
-        if not self.data.has_key(key):
-            self.data[key] = value
-
-    def soft_update(self, data):
-        for (key, value) in data:
-            self.soft_set(key, value)
 
     def refresh(self):
         mtime = os.stat(self.filename).st_mtime
@@ -108,7 +101,6 @@ class ConfList(list):
 
 
 class ConfFileContents(object):
-    
     _timestamp = None
     _data = None
 
@@ -117,7 +109,6 @@ class ConfFileContents(object):
     def __init__(self, filename):
         self.filename = filename
         self.refresh()
-
 
     def refresh(self):
         mtime = os.stat(self.filename).st_mtime
@@ -133,21 +124,14 @@ class ConfFileContents(object):
     def __str__(self):
         return str(self._data)
 
-    def __repr__(self):
-        return str(self._data)
-
-if __name__ == "__main__":
-    cl = ConfList('/tmp/test.txt')
-    print(ConfList(cl))
-
 
 def ConfHunterFactory(cls, filename, locations=None):
     if locations == None:
         script_parent = os.path.join([os.path.dirname(sys.argv[0]), '..'])
         locations = [
-            '.',
+            os.path.join(script_parent, 'etc'),
             script_parent,
-            os.path.join(script_parent, 'etc')
+            '.',
         ]
 
     for location in locations:

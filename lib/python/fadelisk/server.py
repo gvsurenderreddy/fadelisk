@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 
+from __future__ import print_function
 
 import os
 import sys
@@ -14,31 +15,8 @@ from twisted.internet import reactor, protocol, defer
 from twisted.web import server, vhost, static
 from twisted.protocols import basic
 
-import conf
+#import conf
 import site
-
-class ServerConf(conf.ConfYAML):
-    main_parent = os.path.join(os.path.dirname(sys.argv[0]), '..')
-    file_name = 'fadelisk.yaml'
-    file_locations = [
-        '/etc/fadelisk',             # Ubuntu, Debian, Linux Mint, Knoppix
-        '/etc',                      # Red Hat, SuSE
-        '/srv/www/etc',              # FHS Service-centric location 
-        os.path.join(os.path.dirname(sys.argv[0]), '..') # Development
-    ]
-
-    def __init__(self):
-        self.load_conf()
-
-    def load_conf(self):
-        for location in ServerConf.file_locations:
-            print "*", location
-            config_file = os.path.join(location, ServerConf.file_name)
-            if os.access(config_file, os.R_OK):            # readable?
-                conf.ConfYAML.__init__(self, config_file)  # init parent
-                return
-
-        raise RuntimeError, "Could not find and load %s" % ServerConf.file_name
 
 class ServerControlProtocol(basic.LineReceiver):
     def lineReceived(self, line):
@@ -50,8 +28,10 @@ class ServerControlFactory(protocol.ServerFactory):
     protocol = ServerControlProtocol
 
 class Server(object):
-    def __init__(self, options, args):
-        self.conf = ServerConf()
+    def __init__(self, options, args, conf):
+        self.options = options
+        self.conf = conf
+        self.args = args
 
         self.vhost = vhost.NameVirtualHost()
         self.vhost.default=static.File("/var/www/nginx-default")
@@ -93,7 +73,7 @@ class Server(object):
                 full_path = os.path.join(os.path.abspath(collection), site_)
                 if os.path.isdir(full_path):
                     try:
-                        this_site = site.Site(full_path, conf)
+                        this_site = site.Site(full_path, self.conf)
                         self.sites.append(this_site)
                         self.vhost.addHost(site_, this_site.resource)
                         print(site_)
@@ -160,8 +140,8 @@ class Server(object):
             except:
                 pass
 
-def start(options, args):
-    Server(options, args).start()
+def start(options, args, conf):
+    Server(options, args, conf).start()
 
 
 

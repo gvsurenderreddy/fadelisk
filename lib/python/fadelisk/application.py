@@ -21,11 +21,11 @@ class Application(object):
         else:
             script_parent = os.path.join(os.path.dirname(sys.argv[0]), '..')
             locations = [
-                '/etc/fadelisk',
-                '/etc',
-                '/srv/www/etc',
-                script_parent,
-                os.path.join(script_parent, 'etc')
+                '/etc/fadelisk',        # Ubuntu, Debian, Linux Mint, Knoppix
+                '/etc',                 # Red Hat, SuSE
+                '/srv/www/etc',         # FHS Service-centric location 
+                os.path.join(script_parent, 'etc'), # Development
+                script_parent,          # Distribution?
             ]
             self.conf = conf.ConfHunterFactory(
                 conf.ConfYAML, Application.conf_file_name, locations)
@@ -47,7 +47,7 @@ class Application(object):
 
     def dispatch(self):
         if self.options.application_mode_server:
-            server.start(self.options, self.args)
+            server.start(self.options, self.args, self.conf)
         else:
             client.start(self.options, self.args, self.conf)
 

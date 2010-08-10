@@ -59,11 +59,11 @@ class ErrorResource(resource.Resource):
         )
 
 class Site(object):
-    def __init__(self, path, conf):
+    def __init__(self, path, application_conf):
         self.path = path
-        self.conf = conf
+        self.application_conf = application_conf
         try:
-            self.site_conf = conf.ConfYAML(os.path.join(path, 'etc/site.yaml'))
+            self.conf = conf.ConfYAML(os.path.join(path, 'etc/site.yaml'))
         except OSError:
             raise NotFadeliskSiteError, 'Configuration unreadable'
 
@@ -80,8 +80,8 @@ class Site(object):
         self.resource.childNotFound = self.error_resource
 
         # "Lift" some subdirectories above content dir to keep them separate
-        if self.site_conf['top_level_directories']:
-            for directory in self.site_conf['top_level_directories']:
+        if self.conf['top_level_directories']:
+            for directory in self.conf['top_level_directories']:
                 self.resource.putChild(directory,
                                        static.File(self.rel_path(directory)))
 
