@@ -15,6 +15,7 @@ class NotFadeliskSiteError(Exception):
 
 class ProcessorHTML(resource.Resource):
     isLeaf = True
+    allowedMethods = ('GET', 'POST', 'HEAD')
 
     def __init__(self, path, registry, site):
         resource.Resource.__init__(self)
@@ -25,13 +26,26 @@ class ProcessorHTML(resource.Resource):
     def render_GET(self, request):
         request.setHeader('server', 'fadelisk 1.0 (barndt)')
 
-        uri = request.uri
-        if uri.endswith('/'):
-            uri = ''.join([uri, 'index.html'])
-        print(uri)
-        template = self.site.template_lookup.get_template(uri)
+        path = request.path
+        if path.endswith('/'):
+            path = ''.join([path, 'index.html'])
+        template = self.site.template_lookup.get_template(path)
         return template.render(
-            request_uri=uri,
+            request=request,
+            request_data={},
+            site_conf=self.site.conf,
+            **self.site.template_context
+        )
+
+    def render_POST(self, request):
+        request.setHeader('server', 'fadelisk 1.0 (barndt)')
+
+        path = request.path
+        if path.endswith('/'):
+            path = ''.join([path, 'index.html'])
+        template = self.site.template_lookup.get_template(path)
+        return template.render(
+            request=request,
             request_data={},
             site_conf=self.site.conf,
             **self.site.template_context
@@ -53,7 +67,7 @@ class ErrorResource(resource.Resource):
             self.path = ''.join([self.path, 'index.html'])
         template = self.site.template_lookup.get_template(self.path)
         return template.render(
-            request_uri=request.uri,
+            request=request,
             request_data={},
             **self.site.template_context
         )
