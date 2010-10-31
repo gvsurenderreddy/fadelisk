@@ -6,13 +6,6 @@ from twisted.web import resource, static, script
 from mako.lookup import TemplateLookup
 from mako import exceptions
 
-import conf
-
-class NotFadeliskSiteError(Exception):
-     def __init__(self, *args):
-          Exception.__init__(self, *args)
-
-
 class ProcessorHTML(resource.Resource):
     isLeaf = True
     allowedMethods = ('GET', 'POST', 'HEAD')
@@ -25,6 +18,7 @@ class ProcessorHTML(resource.Resource):
 
     def render_GET(self, request):
         request.setHeader('server', 'fadelisk 1.0 (barndt)')
+        request.setResponseCode(200)
 
         path = request.path
         if path.endswith('/'):
@@ -39,6 +33,7 @@ class ProcessorHTML(resource.Resource):
 
     def render_POST(self, request):
         request.setHeader('server', 'fadelisk 1.0 (barndt)')
+        request.setResponseCode(200)
 
         path = request.path
         if path.endswith('/'):
@@ -73,17 +68,14 @@ class ErrorResource(resource.Resource):
         )
 
 class Site(object):
-    def __init__(self, path, application_conf):
+    def __init__(self, path, application_conf, site_conf):
         self.path = path
         self.application_conf = application_conf
-        try:
-            self.conf = conf.ConfYAML(os.path.join(path, 'etc/site.yaml'))
-        except OSError:
-            raise NotFadeliskSiteError, 'Configuration unreadable'
+        self.conf = site_conf
 
         self.error_resource = ErrorResource(self, '/errors/404_not_found.html')
         #self.error_resource.processors = {'.html': self.factory_processor_html}
-        #self.error_resource.childNotFound = resource.NoResource("GRAH")
+        #self.error_resource.childNotFound = resource.NoResource("NO RESOURCE")
 
         self.resource = static.File(self.rel_path('content'))
         self.resource.indexNames=['index.html', 'index.rpy']

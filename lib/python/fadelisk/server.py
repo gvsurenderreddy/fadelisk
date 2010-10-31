@@ -15,7 +15,7 @@ from twisted.internet import reactor, protocol, defer
 from twisted.web import server, vhost, static
 from twisted.protocols import basic
 
-#import conf
+import conf
 import site
 
 class ServerControlProtocol(basic.LineReceiver):
@@ -70,15 +70,37 @@ class Server(object):
 
         for collection in self.collections:
             for site_ in os.listdir(collection):
-                full_path = os.path.join(os.path.abspath(collection), site_)
-                if os.path.isdir(full_path):
-                    try:
-                        this_site = site.Site(full_path, self.conf)
-                        self.sites.append(this_site)
-                        self.vhost.addHost(site_, this_site.resource)
-                        print(site_)
-                    except site.NotFadeliskSiteError:
-                        pass
+                site_path = os.path.join(os.path.abspath(collection), site_)
+                site_etc_path = os.path.join(site_path, 'etc')
+                site_conf_file = os.path.join(site_etc_path, 'site.yaml')
+
+                if not os.path.isdir(site_path):
+                    continue
+
+                if not os.path.exists(site_conf_file):
+                    continue
+
+                try:
+                    print(site_)
+                    site_conf = conf.ConfYAML(site_conf_file)
+                except OSError as err:
+                    print('/!\\ Error while reading config for', site_)
+                    print(str(err))
+                    continue
+
+                # Build resource.
+                this_site = site.Site(site_path, self.conf, site_conf)
+
+                # Add site for the FQDN of the directory
+                self.sites.append(this_site)
+                self.vhost.addHost(site_, this_site.resource)
+
+                # Add hosts for each aliases. Re-use the resource.
+                site_aliases = site_conf['site_aliases']
+                if site_aliases != None:
+                    for alias in site_aliases:
+                        print(' +', alias)
+                        self.vhost.addHost(alias, this_site.resource)
 
     def reopen_std_streams(self):
         null_fd = os.open('/dev/null', os.O_RDWR)
@@ -102,11 +124,12 @@ class Server(object):
         # os.closerange(0, max_fd+1)
 
         #-- Method 2: Limited closure
-        # The application may already have valid and important FDs open.  Only
-        # reopen stdin. Note that os.dup2() closes an FD before copy, if
-        # necessary -- but not if the FDs are the same. Don't touch stderr,
-        # since it doesn't harm SSH and it is needed for early exception
-        # handling.
+        # The application may already have valid and important FDs open.
+        # Only reopen stdin. Note that os.dup2() closes an FD before copy,
+        # if necessary -- but not if the FDs are the same. Don't touch
+        # stderr,  since it is needed for early exception handling and
+        # doesn't affect programs that might wait for open handles to
+        # be closed, such as SSH.
         os.dup2(null_fd, sys.__stdin__.fileno())
         os.dup2(null_fd, sys.__stdout__.fileno())
 
