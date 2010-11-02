@@ -1,13 +1,9 @@
 #!/usr/bin/env python
 
-
 import os
 import sys
 
-#from twisted.application import internet, service
-#from twisted.web import script, resource
 from twisted.internet import reactor, protocol, defer
-from twisted.web import server, vhost, static
 from twisted.protocols import basic
 
 import conf
@@ -43,14 +39,14 @@ class ClientFactory(protocol.ClientFactory):
         #print 'Lost client connection.  Reason:', reason
         # connector.connect() #reconnect
         reactor.stop()
-            
+
     def clientConnectionFailed(self, connector, reason):
         print 'Client connection failed. Reason:', reason
         reactor.stop()
 
 
 class Client(object):
-    def __init__(self, options, args, conf=None):
+    def __init__(self, options, args, conf):
         self.options = options
         self.args = args
         self.conf = conf
@@ -58,8 +54,8 @@ class Client(object):
     def start(self):
         client = ClientFactory()
         reactor.connectTCP(
-            self.conf['control_address'] or 'localhost',
-            self.conf['control_port'] or 1067,
+            self.conf['control_address'],
+            self.conf['control_port'],
             client,
         )
         #client.protocol.sendMessage('shutdown')

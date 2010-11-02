@@ -29,7 +29,7 @@ class ConfDict(object):
             self.data[key] = value
 
     def soft_update(self, data):
-        for (key, value) in data:
+        for key, value in data.items():
             self.soft_set(key, value)
 
 class ConfYAML(ConfDict):

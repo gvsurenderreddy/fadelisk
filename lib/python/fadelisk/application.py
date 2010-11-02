@@ -30,6 +30,20 @@ class Application(object):
             self.conf = conf.ConfHunterFactory(
                 conf.ConfYAML, Application.conf_file_name, locations)
 
+        #-- Update missing values with hard-coded defaults.
+        # Independent
+        self.conf.soft_update({
+            'listen_port': 1066,
+            'bind_address': 'localhost',
+            'process_user': 'www-data',
+            'site_collections': ['/srv/www/site'],
+        })
+        # Dependent
+        self.conf.soft_update({
+            'control_port': self.conf['listen_port']+1,
+            'control_address': self.conf['bind_address']
+        })
+
     def parse_args(self):
         self.parser = OptionParser()
 
@@ -46,8 +60,11 @@ class Application(object):
         (self.options, self.args) = self.parser.parse_args()
 
     def dispatch(self):
-        if self.options.application_mode_server:
+        command = self.args[0]
+        if command == 'start':
             server.start(self.options, self.args, self.conf)
-        else:
+        elif command == 'stop':
             client.start(self.options, self.args, self.conf)
+        else:
+            print("usage: fadelisk [options] start | stop | client | command")
 

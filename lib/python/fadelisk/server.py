@@ -4,13 +4,7 @@ from __future__ import print_function
 
 import os
 import sys
-#import time
-#import signal
-#import string
-#import subprocess
-
-#from twisted.application import internet, service
-#from twisted.web import script, resource
+import pwd
 from twisted.internet import reactor, protocol, defer
 from twisted.web import server, vhost, static
 from twisted.protocols import basic
@@ -32,43 +26,42 @@ class Server(object):
         self.options = options
         self.conf = conf
         self.args = args
+        self.sites = []
 
         self.vhost = vhost.NameVirtualHost()
         self.vhost.default=static.File("/var/www/nginx-default")
-
         self.gather_sites()
         self.ubersite = server.Site(self.vhost)
 
     def start(self):
+        pwent = pwd.getpwnam(self.conf['process_user'])
         self.fork_process()
         self.reopen_std_streams()
         os.setsid()                # become process group leader
-        # Bring sites online if enabled
-        # Maybe TCP command line listener?
+
+        #-- Open logs
+
+        #-- Establish listening ports
         reactor.listenTCP(
-            self.conf['listen_port'] or 1066,
+            self.conf['listen_port'],
             self.ubersite,
-            interface=(self.conf['bind_address'] or 'localhost')
+            interface=self.conf['bind_address']
         )
         reactor.listenTCP(
-            self.conf['control_port'] or 1067,
+            self.conf['control_port'],
             ServerControlFactory(),
-            interface=(self.conf['control_address'] or 'localhost')
+            interface=self.conf['control_address']
         )
-        os.setgid(33)
-        os.setuid(33)
+
+        #-- Relinquish privileges
+        os.setgid(pwent.pw_gid)
+        os.setuid(pwent.pw_uid)
+
+        #-- Start the reactor.
         reactor.run()
-        # Wait for reactor to finish.
-        # Clean up.
 
     def gather_sites(self):
-        self.sites = []
-        try:
-            self.collections = self.conf['site_collections']
-        except:
-            self.collections = [ '/srv/www/site' ]
-
-        for collection in self.collections:
+        for collection in self.conf['site_collections'] or [ '/srv/www/site' ]:
             for site_ in os.listdir(collection):
                 site_path = os.path.join(os.path.abspath(collection), site_)
                 site_etc_path = os.path.join(site_path, 'etc')
