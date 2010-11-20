@@ -52,11 +52,6 @@ class Application(object):
             action="store", dest="conf_file"
         )
 
-        self.parser.add_option("-s", "--server",
-            help="launch fadelisk server",
-            action="store_true", dest="application_mode_server"
-        )
-
         (self.options, self.args) = self.parser.parse_args()
 
     def dispatch(self):
