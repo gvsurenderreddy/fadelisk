@@ -4,8 +4,7 @@
     # import fadelisk
 %>
 
-<%namespace name="menu" file="/menu.mako" inheritable="True" />
-<%namespace name="page_title" file="/page_title.mako" inheritable="True" />
+##<%namespace name="menu" file="/example_global.mako" inheritable="True" />
 
 ${next.body(**context.kwargs)}
 
