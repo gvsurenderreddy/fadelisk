@@ -46,6 +46,21 @@ class ProcessorHTML(resource.Resource):
             **self.site.template_context
         )
 
+    def render_HEAD(self, request):
+        request.setHeader('server', 'fadelisk 1.0 (barndt)')
+        request.setResponseCode(200)
+
+        path = request.path
+        if path.endswith('/'):
+            path = ''.join([path, 'index.html'])
+        template = self.site.template_lookup.get_template(path)
+        return template.render(
+            request=request,
+            request_data={},
+            site_conf=self.site.conf,
+            **self.site.template_context
+        )
+
 class ErrorResource(resource.Resource):
     isLeaf = True
 
