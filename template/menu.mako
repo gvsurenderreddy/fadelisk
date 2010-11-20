@@ -16,6 +16,3 @@
 
 <%def name="menu_list(items=[], override={})">
 </%def>
-
-
-## vim:syn=mako
