@@ -6,6 +6,15 @@ from twisted.web import resource, static, script
 from mako.lookup import TemplateLookup
 from mako import exceptions
 
+class SneakyStatic(static.File):
+    def __init__(self, path, defaultType="text/html", ignoredExts=(),
+                 registry=None, allowExt=0):
+        static.File.__init__(self, path, defaultType, ignoredExts,
+                             registry, allowExt)
+
+#    def getChild(self, path, request):
+#        raise OSError
+
 class ProcessorHTML(resource.Resource):
     isLeaf = True
     allowedMethods = ('GET', 'POST', 'HEAD')
@@ -17,49 +26,34 @@ class ProcessorHTML(resource.Resource):
         self.site = site
 
     def render_GET(self, request):
-        request.setHeader('server', 'fadelisk 1.0 (barndt)')
-        request.setResponseCode(200)
-
-        path = request.path
-        if path.endswith('/'):
-            path = ''.join([path, 'index.html'])
-        template = self.site.template_lookup.get_template(path)
-        return template.render(
-            request=request,
-            request_data={},
-            site_conf=self.site.conf,
-            **self.site.template_context
-        )
+        return self.render_request(request)
 
     def render_POST(self, request):
-        request.setHeader('server', 'fadelisk 1.0 (barndt)')
+        return self.render_request(request)
+
+    def render_request(self, request):
+        request.setHeader('server', self.site.application_conf['server'])
         request.setResponseCode(200)
 
         path = request.path
+        for charm, target in self.site.conf['charm'].iteritems():
+            if path.startswith(charm):
+                path = target or charm
+                break
+        with open("/tmp/path.txt", "w") as f:
+            data = f.write(path)
         if path.endswith('/'):
             path = ''.join([path, 'index.html'])
         template = self.site.template_lookup.get_template(path)
+
         return template.render(
             request=request,
             request_data={},
-            site_conf=self.site.conf,
+            site=self.site,
+            site_path=self.path,
             **self.site.template_context
         )
 
-    def render_HEAD(self, request):
-        request.setHeader('server', 'fadelisk 1.0 (barndt)')
-        request.setResponseCode(200)
-
-        path = request.path
-        if path.endswith('/'):
-            path = ''.join([path, 'index.html'])
-        template = self.site.template_lookup.get_template(path)
-        return template.render(
-            request=request,
-            request_data={},
-            site_conf=self.site.conf,
-            **self.site.template_context
-        )
 
 class ErrorResource(resource.Resource):
     isLeaf = True
@@ -70,7 +64,7 @@ class ErrorResource(resource.Resource):
         self.path = path
 
     def render_GET(self, request):
-        request.setHeader('server', 'fadelisk 1.0 (barndt)')
+        request.setHeader('server', self.site.application_conf['server'])
         request.setResponseCode(404)
 
         if self.path.endswith('/'):
@@ -79,8 +73,11 @@ class ErrorResource(resource.Resource):
         return template.render(
             request=request,
             request_data={},
+            site=self.site,
+            site_path=self.path,
             **self.site.template_context
         )
+
 
 class Site(object):
     def __init__(self, path, application_conf, site_conf):
@@ -92,7 +89,8 @@ class Site(object):
         #self.error_resource.processors = {'.html': self.factory_processor_html}
         #self.error_resource.childNotFound = resource.NoResource("NO RESOURCE")
 
-        self.resource = static.File(self.rel_path('content'))
+        #self.resource = static.File(self.rel_path('content'))
+        self.resource = SneakyStatic(self.rel_path('content'))
         self.resource.indexNames=['index.html', 'index.rpy']
         self.resource.processors = {
             '.html': self.factory_processor_html,
