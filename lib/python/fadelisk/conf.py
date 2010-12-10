@@ -17,9 +17,10 @@ class ConfDict(object):
         self.data = {}
 
     def __getitem__(self, key):
-        if self.data.has_key(key):
-            return self.data[key]
-        return None
+        return self.data[key]
+#        if self.data.has_key(key):
+#            return self.data[key]
+#        return None
 
     def __str__(self):
         return str(self.data)
