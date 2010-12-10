@@ -3,7 +3,7 @@
     import os
     import fadelisk
 
-    leave_lower = 'and of the or with'.split()
+    leave_lower = 'and of the or with by to a nor because'.split()
 %>
 
 <%def name="page_title(uri=None)">
@@ -15,18 +15,17 @@
     if not uri:
 	return ''
 
-    nodes = uri.split('/')[1:]
+    nodes = uri.split('/')[:]
 
-    # nginx would redirect (302) for a directory called with no trailing
+    # Server would redirect (302) for a directory called with no trailing
     # slash, and would not-found (404) if a doc were called as a directory
     # (i.e., with a trailing slash). If the URI had no slash, it was a doc
     # and the last node can br pruned.
     if not uri.endswith('/'):
-	nodes.pop()
+        nodes[-1] = ''
 
     if not nodes:
 	return 'Home'
-
 
     try:
         #-- Data cache
@@ -53,7 +52,7 @@
         pass
 
     title_words = []
-    for tok in nodes[-1].split('_'):
+    for tok in nodes[-2].split('_'):
         if title_words and tok in leave_lower:
             title_words.append(tok)
         else:
@@ -66,9 +65,8 @@
         pass
 
     return title
-
 %>
 </%def>
 
-## vim:syn=mako
+## vim:ft=mako
 
