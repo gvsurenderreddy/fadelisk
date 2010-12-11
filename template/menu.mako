@@ -1,9 +1,8 @@
 <%namespace file="/page_title.mako" import="page_title" />
 
 <%def name="simple(items=[], override={})">
-<div id="menu">
 % if len(items):
-    <ul>
+    <ul class="menu">
         <%
             for item in items:
                 if item in override:
@@ -14,7 +13,6 @@
         %>
     </ul>
 % endif
-</div>
 </%def>
 
 <%def name="menu_list(items=[], override={})">
