@@ -20,6 +20,9 @@
     if not uri:                                 # Fetch path if none specified.
         uri = request.path
 
+    if uri.startswith('/'):
+        uri = request.path + uri
+
     if not uri == '/':
         uri = uri.split('?')[0]                         # Remove query
         nodes = uri.split('/')
