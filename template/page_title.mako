@@ -20,7 +20,7 @@
     if not uri:                                 # Fetch path if none specified.
         uri = request.path
 
-    if uri.startswith('/'):
+    if not uri.startswith('/'):
         uri = request.path + uri
 
     if not uri == '/':
