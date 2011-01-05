@@ -33,10 +33,13 @@ class Application(object):
         #-- Update missing values with hard-coded defaults.
         # Independent
         self.conf.soft_update({
+            'server': 'fadelisk 1.0 (barndt)',
             'listen_port': 1066,
             'bind_address': 'localhost',
             'process_user': 'www-data',
             'site_collections': ['/srv/www/site'],
+            'charm': {},
+            'directory_index': 'index.html',
         })
         # Dependent
         self.conf.soft_update({

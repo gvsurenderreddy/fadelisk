@@ -50,7 +50,7 @@ class ProcessorHTML(resource.Resource):
             request=request,
             request_data={},
             site=self.site,
-            site_path=self.path,
+            site_path=self.site.path,
             **self.site.template_context
         )
 
@@ -74,7 +74,7 @@ class ErrorResource(resource.Resource):
             request=request,
             request_data={},
             site=self.site,
-            site_path=self.path,
+            site_path=self.site.path,
             **self.site.template_context
         )
 
@@ -121,6 +121,7 @@ class Site(object):
             ],
             module_directory = self.rel_path('tmp/mako-module'),
             input_encoding='utf-8',
+            output_encoding='utf-8',
             filesystem_checks = True,
         )
 
