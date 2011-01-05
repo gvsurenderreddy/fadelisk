@@ -1,4 +1,4 @@
-<%namespace file="/page_title.mako" import="page_title" />
+<%namespace file="/layout/page_title.mako" import="page_title" />
 
 <%def name="simple(items=[], override={})">
 % if len(items):
@@ -15,5 +15,3 @@
 % endif
 </%def>
 
-<%def name="menu_list(items=[], override={})">
-</%def>
