@@ -7,7 +7,9 @@ form.get_value('title', value=article['title'])
 
 <%def name="formula(fields=[], values={}, form_info={})">
     <%
-        html_out = ['<form action="" method="post">']
+        html_out = []
+        if not form_info.get('skip_form_wrap'):
+            html_out.append('<form action="" method="post">')
 
         for item in fields:
             if isinstance(item, dict):
@@ -17,10 +19,12 @@ form.get_value('title', value=article['title'])
             elif isinstance(item, str):
                 html_out.append(item)
 
-        html_out.append('<div class="form-buttonbar">')
-        html_out.append('<input class="submit" type="submit" value="Save" />')
-        html_out.append('</div>')
-        html_out.append('</form>')
+        if not form_info.get('skip_buttonbar'):
+            html_out.append('<div class="form-buttonbar">')
+            html_out.append('<input class="submit" type="submit" value="Save" />')
+            html_out.append('</div>')
+        if not form_info.get('skip_form_wrap'):
+            html_out.append('</form>')
 
         return "\n".join(html_out)
     %>

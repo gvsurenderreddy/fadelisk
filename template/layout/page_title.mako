@@ -1,5 +1,6 @@
 <%!
     import os
+    import fadelisk
     leave_lower = 'and of the or with by to a nor because'.split()
 %>
 
@@ -53,6 +54,31 @@
     cache['data']['page_title'][uri] = title
     return title
 %>
+</%def>
+
+<%def name="path_title(uri=None)">
+    <%
+    if not uri:                                 # Fetch path if none specified.
+        uri = request.path
+
+    if not uri.startswith('/'):
+        uri = request.path + uri
+
+    if uri == '/':
+        return []
+
+    if not uri == '/':
+        uri = uri.split('?')[0]                         # Remove query
+        nodes = uri.split('/')[1:-1]
+
+        _path_title = []
+        _path = ['']
+        for node in nodes:
+            _path.append(node)
+            _path_title.append(page_title('/'.join(_path+[''])))
+
+        return _path_title
+    %>
 </%def>
 
 ## vim:ft=mako

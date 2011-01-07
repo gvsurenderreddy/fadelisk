@@ -22,6 +22,9 @@ class ConfDict(object):
 #            return self.data[key]
 #        return None
 
+    def __repr__(self):
+        return repr(self.data)
+
     def __str__(self):
         return str(self.data)
 
