@@ -19,7 +19,7 @@
         if not site.conf['debug']:
             return
 
-        if not len(request_data['debug']):
+        if not request_data['debug']:
             return
 
         debug_concat = '\n\n'.join(request_data['debug'])
