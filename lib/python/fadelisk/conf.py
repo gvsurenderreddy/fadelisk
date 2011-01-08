@@ -28,6 +28,9 @@ class ConfDict(object):
     def __str__(self):
         return str(self.data)
 
+    def get(self, key, default=None):
+        return self.data.get(key, default)
+
     def soft_set(self, key, value):
         if not self.data.has_key(key):
             self.data[key] = value
@@ -45,12 +48,16 @@ class ConfYAML(ConfDict):
         self.refresh()
 
     def __getitem__(self, key):
-        self.refresh()
+        if not self.ignore_changes:
+            self.refresh()
         return ConfDict.__getitem__(self, key)
 
+    def get(self, key, default=None):
+        if not self.ignore_changes:
+            self.refresh()
+        return ConfDict.get(self, key, default)
+
     def refresh(self):
-        if self.ignore_changes:
-            return
         mtime = os.stat(self.filename).st_mtime
         if mtime != self.timestamp:
             with open(self.filename) as yaml_file:
@@ -67,13 +74,12 @@ class ConfJSON(ConfDict):
         self.refresh()
 
     def __getitem__(self, key):
-        self.refresh()
+        if not self.ignore_changes:
+            self.refresh()
         return ConfDict.__getitem__(self, key)
 
 
     def refresh(self):
-        if self.ignore_changes:
-            return
         mtime = os.stat(self.filename).st_mtime
         if mtime != self.timestamp:
             with open(self.filename) as json_file:
@@ -92,20 +98,21 @@ class ConfList(list):
         self.refresh()
 
     def __iter__(self):
-        self.refresh()
+        if not self.ignore_changes:
+            self.refresh()
         return list.__iter__(self)
 
     def __getitem__(self, key):
-        self.refresh()
+        if not self.ignore_changes:
+            self.refresh()
         return list.__getitem__(self, key)
 
     def __getslice__(self, i=None, j=None):
-        self.refresh()
+        if not self.ignore_changes:
+            self.refresh()
         return list.__getslice__(self, i, j)
 
     def refresh(self):
-        if self.ignore_changes:
-            return
         mtime = os.stat(self.filename).st_mtime
         if mtime != self._timestamp:
             with open(self.filename) as f:
@@ -125,8 +132,6 @@ class ConfFileContents(object):
         self.refresh()
 
     def refresh(self):
-        if self.ignore_changes:
-            return
         mtime = os.stat(self.filename).st_mtime
         if mtime != self._timestamp:
             with open(self.filename) as f:
@@ -134,7 +139,8 @@ class ConfFileContents(object):
             self._timestamp = mtime
 
     def contents(self):
-        self.refresh()
+        if not self.ignore_changes:
+            self.refresh()
         return self._data
 
     def __str__(self):

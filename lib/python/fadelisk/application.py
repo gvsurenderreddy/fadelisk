@@ -17,8 +17,7 @@ class Application(object):
 
     def load_conf(self):
         if self.options.conf_file:
-            self.conf = conf.ConfYAML(Application.conf_file_name,
-                                      ignore_changes=True)
+            self.conf = conf.ConfYAML(Application.conf_file_name, ignore_changes=True)
         else:
             script_parent = os.path.join(os.path.dirname(sys.argv[0]), '..')
             locations = [
@@ -29,8 +28,10 @@ class Application(object):
                 script_parent,          # Distribution?
             ]
             self.conf = conf.ConfHunterFactory(
-                conf.ConfYAML, Application.conf_file_name, locations)
+                conf.ConfYAML, Application.conf_file_name, locations,
+                    ignore_changes=True)
 
+        sys.stderr.write(repr(self.conf))
         #-- Update missing values with hard-coded defaults.
         # Independent
         self.conf.soft_update({

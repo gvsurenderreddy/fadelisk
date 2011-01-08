@@ -113,12 +113,15 @@ class Site(object):
                 'data': {},
             },
         }
+        template_lookup_directories = [
+            self.rel_path('content'),
+            self.rel_path('template'),
+        ]
+        template_lookup_directories.extend(
+            self.application_conf.get('template_directories', [])
+        )
         self.template_lookup = TemplateLookup(
-            directories = [
-                self.rel_path('content'),
-                self.rel_path('template'),
-                '/srv/project/fadelisk/template',
-            ],
+            directories = template_lookup_directories,
             module_directory = self.rel_path('tmp/mako-module'),
             input_encoding='utf-8',
             output_encoding='utf-8',
