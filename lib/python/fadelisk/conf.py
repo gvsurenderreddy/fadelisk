@@ -37,9 +37,10 @@ class ConfDict(object):
             self.soft_set(key, value)
 
 class ConfYAML(ConfDict):
-    def __init__(self, filename):
+    def __init__(self, filename, ignore_changes=False):
         ConfDict.__init__(self)
         self.filename = filename
+        self.ignore_changes = ignore_changes
         self.timestamp = None
         self.refresh()
 
@@ -48,6 +49,8 @@ class ConfYAML(ConfDict):
         return ConfDict.__getitem__(self, key)
 
     def refresh(self):
+        if self.ignore_changes:
+            return
         mtime = os.stat(self.filename).st_mtime
         if mtime != self.timestamp:
             with open(self.filename) as yaml_file:
@@ -56,9 +59,10 @@ class ConfYAML(ConfDict):
 
 
 class ConfJSON(ConfDict):
-    def __init__(self, filename):
+    def __init__(self, filename, ignore_changes=False):
         ConfDict.__init__(self)
         self.filename = filename
+        self.ignore_changes = ignore_changes
         self.timestamp = None
         self.refresh()
 
@@ -68,6 +72,8 @@ class ConfJSON(ConfDict):
 
 
     def refresh(self):
+        if self.ignore_changes:
+            return
         mtime = os.stat(self.filename).st_mtime
         if mtime != self.timestamp:
             with open(self.filename) as json_file:
@@ -79,9 +85,10 @@ class ConfList(list):
     _timestamp = None
     filename = None
 
-    def __init__(self, filename):
+    def __init__(self, filename, ignore_changes=False):
         list.__init__(self)
         self.filename = filename
+        self.ignore_changes = ignore_changes
         self.refresh()
 
     def __iter__(self):
@@ -97,6 +104,8 @@ class ConfList(list):
         return list.__getslice__(self, i, j)
 
     def refresh(self):
+        if self.ignore_changes:
+            return
         mtime = os.stat(self.filename).st_mtime
         if mtime != self._timestamp:
             with open(self.filename) as f:
@@ -110,11 +119,14 @@ class ConfFileContents(object):
 
     filename = None
 
-    def __init__(self, filename):
+    def __init__(self, filename, ignore_changes=False):
         self.filename = filename
+        self.ignore_changes = ignore_changes
         self.refresh()
 
     def refresh(self):
+        if self.ignore_changes:
+            return
         mtime = os.stat(self.filename).st_mtime
         if mtime != self._timestamp:
             with open(self.filename) as f:
@@ -129,7 +141,7 @@ class ConfFileContents(object):
         return str(self._data)
 
 
-def ConfHunterFactory(cls, filename, locations=None):
+def ConfHunterFactory(cls, filename, locations=None, ignore_changes=False):
     if locations == None:
         script_parent = os.path.join([os.path.dirname(sys.argv[0]), '..'])
         locations = [
@@ -141,6 +153,6 @@ def ConfHunterFactory(cls, filename, locations=None):
     for location in locations:
         conf_file = os.sep.join([location, filename])
         if os.access(conf_file, os.R_OK):            # readable?
-            return cls(conf_file)
+            return cls(conf_file, ignore_changes=ignore_changes)
         raise RuntimeError, "Could not find %s" % filename
 

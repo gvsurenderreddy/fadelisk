@@ -17,7 +17,8 @@ class Application(object):
 
     def load_conf(self):
         if self.options.conf_file:
-            self.conf = conf.ConfYAML(Application.conf_file_name)
+            self.conf = conf.ConfYAML(Application.conf_file_name,
+                                      ignore_changes=True)
         else:
             script_parent = os.path.join(os.path.dirname(sys.argv[0]), '..')
             locations = [
