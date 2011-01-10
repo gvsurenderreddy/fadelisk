@@ -18,9 +18,6 @@ class ConfDict(object):
 
     def __getitem__(self, key):
         return self.data[key]
-#        if self.data.has_key(key):
-#            return self.data[key]
-#        return None
 
     def __repr__(self):
         return repr(self.data)
@@ -32,8 +29,7 @@ class ConfDict(object):
         return self.data.get(key, default)
 
     def soft_set(self, key, value):
-        if not self.data.has_key(key):
-            self.data[key] = value
+        self.data.setdefault(key, value)
 
     def soft_update(self, data):
         for key, value in data.items():
