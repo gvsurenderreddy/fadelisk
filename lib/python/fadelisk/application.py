@@ -31,7 +31,6 @@ class Application(object):
                 conf.ConfYAML, Application.conf_file_name, locations,
                     ignore_changes=True)
 
-        sys.stderr.write(repr(self.conf))
         #-- Update missing values with hard-coded defaults.
         # Independent
         self.conf.soft_update({
