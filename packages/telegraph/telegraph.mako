@@ -14,7 +14,11 @@
     import hashlib
     import pprint
 
-    from pymongo import Connection, ASCENDING, DESCENDING, bson
+    from pymongo import Connection, ASCENDING, DESCENDING
+    try:
+        from pymongo import bson
+    except ImportError:
+        import bson
 %>
 
 <%def name="telegraph()">
