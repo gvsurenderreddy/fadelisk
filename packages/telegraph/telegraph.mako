@@ -31,7 +31,6 @@
     %>
 </%def>
 
-
 ##:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::: DISPATCHER
 
 <%def name="dispatch()">
@@ -74,7 +73,7 @@
 
 <%def name="entry_list()">
     <%
-        request_data['path_title'].append('List Entries')
+        request_data['path_nodes'].append('List Entries')
         entries = fetch_entries()
 
         if not entries:
@@ -155,7 +154,7 @@
 
 <%def name="display_most_recent()">
 <%
-    request_data['path_title'].append('Recent Entries')
+    request_data['path_nodes'].append('Recent Entries')
     entries = fetch_entries()
 
     if not entries:
@@ -318,7 +317,7 @@
     %>
     <%
         if request.method == 'GET':
-            request_data['path_title'].append('New Entry')
+            request_data['path_nodes'].append('New Entry')
             entry_form({'visible': True})
             return
 
@@ -500,7 +499,7 @@
 
 <%def name="login_form(message='', goal='')">
     <%
-        request_data['path_title'].append('Log In')
+        request_data['path_nodes'].append('Log In')
         request_data['telegraph']['submenu'] = []
         true_goal = (form.get_value('goal', attribute=False) or
             goal or request.uri)
@@ -520,8 +519,8 @@
 <%def name="login()">
     <%def name="login_success()">
         <%
-            request_data['path_title'].append('Log In')
-            request_data['path_title'].append('Success')
+            request_data['path_nodes'].append('Log In')
+            request_data['path_nodes'].append('Success')
         %>
         <h1>Logged In</h1>
         You have been successfully logged in.
@@ -571,7 +570,7 @@
 <%def name="logout()">
 You have been successfully logged out.
 <%
-    request_data['path_title'].append('Log Out')
+    request_data['path_nodes'].append('Log Out')
     cookie_crumble('user_name')
     cookie_crumble('auth_token')
     redirect.refresh('./')
