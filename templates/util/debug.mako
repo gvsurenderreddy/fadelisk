@@ -22,7 +22,13 @@
         if not request_data['debug']:
             return
 
-        debug_concat = '\n\n'.join(request_data['debug'])
+        debug_strings = []
+        for item in request_data['debug']:
+            try:
+                debug_strings.append(str(item))
+            except:
+                pass
+        debug_concat = '\n\n'.join(debug_strings)
 
         if not debug_concat:
             return
