@@ -115,6 +115,7 @@ class Site(object):
         }
         template_lookup_directories = [
             self.rel_path('content'),
+            self.rel_path('templates'),
             self.rel_path('template'),
         ]
         template_lookup_directories.extend(
