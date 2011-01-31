@@ -99,10 +99,11 @@ class Site(object):
         self.resource.childNotFound = self.error_resource
 
         # "Lift" some subdirectories above content dir to keep them separate
-        if self.conf['top_level_directories']:
-            for directory in self.conf['top_level_directories']:
-                self.resource.putChild(directory,
-                                       static.File(self.rel_path(directory)))
+        for directory in self.conf.get('top_level_directories', []):
+            self.resource.putChild(
+                directory,
+                static.File(self.rel_path(directory))
+            )
 
         self.template_context = {
             'vhost_path': self.path,
