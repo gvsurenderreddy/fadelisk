@@ -14,17 +14,46 @@
     import hashlib
     import pprint
 
-    from pymongo import Connection, ASCENDING, DESCENDING
+    from pymongo import Connection, ASCENDING, DESCENDING, errors
     try:
         from pymongo import bson
     except ImportError:
         import bson
+
+    menu_items = [
+        { 'uri': './',              'states': 'noauth,user,admin' },
+        { 'uri': '?action=list',    'states': 'noauth,user,admin' },
+    ]
+    menu_override = {
+        './':                   'Recent Entries',
+        '?action=list':         'List Entries',
+        '?action=new':          'New Entry',
+        '?action=login':        'Log In',
+        '?action=links':        'Links',
+        '?action=users':        'Users',
+        '?action=logout':       'Log Out',
+    }
 %>
 
 <%def name="telegraph()">
     <%
-        db_connect()
+        request_data['telegraph'] = {}          # Local store
+        try:
+            db_connect()
+        except errors.AutoReconnect:
+            return                              # Error handled by db_connect()
+
         check_auth()
+
+        # Resolve auth mode
+        # TODO: Blend into check_auth()
+        request_data['telegraph']['auth_state'] = 'noauth'
+        if 'user' in request_data['telegraph']:
+            user = request_data['telegraph']['user']
+            request_data['telegraph']['auth_state'] = 'user'
+            if user['user_name'] == 'admin' or user.get('admin', False):
+                request_data['telegraph']['auth_state'] = 'admin'
+
         content = capture(dispatch)
         submenu()
         context.write(content)
@@ -33,6 +62,18 @@
 
 ##:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::: DISPATCHER
 
+<%def name="new_dispatch()">
+    <%
+        if not 'action' in request.args:
+            display_most_recent()
+
+        if not request.args['action'] in menu_items:
+            redirect.refresh('./')
+
+        # Dispatch
+    %>
+</%def>
+
 <%def name="dispatch()">
     <%
         if 'id' in request.args:
@@ -40,6 +81,7 @@
             actions = {
                 'view': entry_view,
                 'edit': entry_edit,
+                'delete': entry_delete,
             }
             requested_action = 'view'
             if 'action' in request.args:
@@ -81,9 +123,9 @@
             return
     %>
 
-    <table class="spreadsheet" style="margin: 10pt auto;">
+    <table class="spreadsheet" style="width: 99%; margin: 10pt auto;">
         <thead>
-            % if request_data['telegraph']['user']:
+            % if request_data['telegraph']['auth_state'] == 'admin':
                 <td>Visible</td>
             % endif
             <td>Time</td>
@@ -94,13 +136,15 @@
         <tbody>
             % for entry in entries:
                 <tr>
-                    <td class="center">
-                        % if entry.get('visible'):
-                          <span style="color: #1e1">&bull;</span>
-                        % else:
-                          <span style="color: #e11">&bull;</span>
-                        % endif
-                    </td>
+                    % if request_data['telegraph']['auth_state'] == 'admin':
+                        <td class="center">
+                            % if entry.get('visible'):
+                              <span style="color: #1e1">&bull;</span>
+                            % else:
+                              <span style="color: #e11">&bull;</span>
+                            % endif
+                        </td>
+                    % endif
                     <td>
                         ${entry.get('timestamp', 'Unstuck in Time')}
                     </td>
@@ -119,28 +163,37 @@
             % endfor
         </tbody>
         <tfoot>
+            % if request_data['telegraph']['auth_state'] == 'admin':
+                <td></td>
+            % endif
             <td></td>
-            <td></td>
-            <td colspan="2">${request_data['telegraph']['db']['entries'].count()} Entries</td>
+            <td colspan="2">
+                ${request_data['telegraph']['db']['entries'].count()} Entries
+            </td>
         </tfoot>
         </table>
+</%def>
 
+<%def name="auth_state()">
+    <%
+        return request_data['telegraph']['auth_state']
+    %>
 </%def>
 
 <%def name="fetch_entries()">
 <%
-    if 'user' in request_data['telegraph']:
-        if request_data['telegraph']['user'].get('admin'):
-            # Admin: All articles
-            query = None
-        else:
-            # User: All articles either visible or author matches user_name
-            query = {
-                '$or': [
-                    {'visible': True},
-                    {'author': request_data['telegraph']['user']['user_name'] }
-                ]
-            }
+    _auth_state = auth_state()
+    if _auth_state == 'admin':
+        # Admin: All articles
+        query = None
+    elif _auth_state == 'user':
+        # User: All articles either visible or author matches user_name
+        query = {
+            '$or': [
+                {'visible': True},
+                {'author': request_data['telegraph']['user']['user_name'] }
+            ]
+        }
     else:
         # Not Logged In: Only visible articles.
         query = { 'visible': True }
@@ -188,15 +241,6 @@
             author = get_user(entry['author'])
             if author:
                 author_full_name = author.get('full_name', 'Lost+Found')
-
-        # Toolbar
-        editable = False
-        if 'user' in request_data['telegraph']:
-            user = request_data['telegraph']['user']
-            if (user.get('admin') or
-                user['user_name'] == author.get('user_name')):
-                editable = True
-
     %>
     <article id="${entry['_id']}" class="telegraph">
         <p class="entrytitle">
@@ -204,13 +248,19 @@
         </p>
         <p class="header left">${author_full_name}</p>
         <p class="header right">${entry_time}</p>
-        % if editable:
+        % if user_can_edit_entry(entry):
             <div class="toolbar">
                 <%
                     override = {
-                    '?action=edit&id=%s' % entry['_id']: 'Edit',
+                        '?action=edit&id=%s' % entry['_id']: 'Edit',
+                        '?action=delete&id=%s' % entry['_id']: 'Delete',
                     }
-                    menu.simple(override.keys(), override)
+                    menu.simple(
+                        [
+                            '?action=edit&id=%s' % entry['_id'],
+                            '?action=delete&id=%s' % entry['_id'],
+                        ]
+                    , override)
                 %>
             </div>
         % endif
@@ -230,6 +280,7 @@
 
         # Allow if visible to all
         if entry.get('visible'):
+            request_data['path_nodes'].append('View Entry')
             display_entry(entry)
             return
 
@@ -237,11 +288,13 @@
         if 'user' in request_data['telegraph']:
             user = request_data['telegraph']['user']
             if user.get('admin') or user['user_name'] == entry.get('author'):
+                request_data['path_nodes'].append('View Entry')
                 display_entry(entry)
                 return
 
         # Adminish about authorship (or admin privs, but leave that out) 
         # being necessary.
+        request_data['path_nodes'].append('Error')
         context.write('<h1>Entry Not visible.</h1>')
         context.write('You need to be logged in as the author to see this entry.')
     %>
@@ -262,6 +315,7 @@
         if need_login('You must be logged in to edit entries.'):
             return
 
+        request_data['path_nodes'].append('Edit Entry')
         #:: ANY method
         entry = get_entry(entry_id)
 
@@ -270,13 +324,13 @@
             return
 
         if not user_can_edit_entry(entry):
-            context.write('<h1>You cannot edit this article.</h1>')
-            context.write('You must be its author, or have admin privileges.')
+            error('To edit this article, you must be its author '
+                    + 'or have admin privileges.',
+                title='Permission Denied')
             return
 
         #:: GET method
         if request.method == 'GET':
-            context.write('<h1>Edit Entry</h1>')
             entry_form(entry)
             return
 
@@ -301,11 +355,54 @@
                 { 'tags': [tag.strip() for tag in tags] }
             )
             request_data['telegraph']['db']['entries'].save(updated_entry)
-            context.write('<h1>Entry updated.</h1>')
-            context.write('The entry has been updated to reflect the new data.')
+            request_data['path_nodes'].append('Success')
+            context.write('<p>The entry has been updated.</p>')
             #entry_form(entry)
             return
 
+    %>
+</%def>
+
+<%def name="entry_delete(entry_id)">
+    <%def name="confirm()">
+        <%
+            request_data['path_nodes'].append('Confirm')
+        %>
+        <h1>Really Delete this article?</h1>
+        <a href="${request.uri}&confirm=yes">Delete</a>
+        ## TODO: Return to previous page
+        <a href="./">Cancel</a>
+    </%def>
+    <%
+        request_data['path_nodes'].append('Delete Entry')
+
+        if auth_state() == 'noauth':
+            error('To delete this article, you must log in.',
+                title='Not Authenticated')
+            return
+
+        entry = get_entry(entry_id, error_on_noexist=True)
+        if not entry:
+            return
+
+        if not user_can_edit_entry(entry):
+            error('To delete this article, you must be its author '
+                    + 'or have admin privileges.',
+                title='Permission Denied')
+            return
+
+        if not formula.get_value('confirm', attribute=False):
+            confirm()
+            return
+
+        try:
+            request_data['telegraph']['db']['entries'].remove(
+                {'_id': entry['_id']}
+            )
+        except:
+            request_data['path_nodes'].append('Error')
+        else:
+            request_data['path_nodes'].append('Success')
     %>
 </%def>
 
@@ -394,70 +491,29 @@
     %>
 </%def>
 
-<%def name="display_entry(entry)">
-    <%
-        # Time
-        entry_time = "Unstuck in Time"
-        try:
-            if 'timestamp' in entry:
-                timestamp = datetime.datetime.strptime(
-                entry['timestamp'],
-                    "%Y-%m-%dT%H:%M:%S"
-                )
-                entry_time = ' '.join([
-                    timestamp.strftime('%A,'),
-                    str(timestamp.day),
-                    timestamp.strftime('%B %Y &mdash; %I:%M %p'),
-                ])
-        except:
-            pass
-
-        # Author
-        author_descr = get_user_full_name(get_user(entry['author']))
-
-        # Toolbar
-        editable = False
-        if 'user' in request_data['telegraph']:
-            user = request_data['telegraph']['user']
-            if (user.get('admin') or
-                user['user_name'] == author.get('user_name')):
-                editable = True
-
-    %>
-    <article id="${entry['_id']}" class="telegraph">
-        <p class="entrytitle">
-            <a href="?id=${entry['_id']}">${entry['title']}
-                <span>[permalink]</span></a>
-        </p>
-        <p class="header left">${author_descr|h}</p>
-        <p class="header right">${entry_time}</p>
-        % if editable:
-            <div class="toolbar">
-                <%
-                    override = {
-                    '?action=edit&id=%s' % entry['_id']: 'Edit',
-                    }
-                    menu.simple(override.keys(), override)
-                %>
-            </div>
-        % endif
-        <div class="entrybody">${entry.get('text')|trim}</div>
-        <p class="tags">${', '.join(entry.get('tags', []))}</p>
-    </article>
-</%def>
-
 <%def name="get_user(user_name)">
     <%
         return request_data['telegraph']['db']['users'].find_one({'user_name': user_name})
     %>
 </%def>
 
-<%def name="get_entry(entry_id)">
+<%def name="get_entry(entry_id, error_on_noexist=False)">
     <%
-        return request_data['telegraph']['db']['entries'].find_one({'_id': bson.ObjectId(entry_id)})
+        entry = request_data['telegraph']['db']['entries'].find_one({'_id': bson.ObjectId(entry_id)})
+        if error_on_noexist and not entry:
+            error("An entry with that ID could not be found.",
+                title='Entry Does Not Exist')
+        return entry
     %>
 </%def>
 
+<%def name="error(message='', title='Error', add_path_node='Error')">
+    <%
+        request_data['path_nodes'].append(add_path_node)
+    %>
+    <h1>${title}</h1>
+    <p>${message}</p>
+</%def>
 
 <%def name="entry_form(entry={}, message='', highlight={})">
     <%
@@ -596,7 +652,7 @@ You have been successfully logged out.
 
         #-- No authentication token? (Leave user_name if set.) 
         if not auth_token:
-            debug.append("AUTH: No auth token.")
+            debug.debug_append("AUTH: No auth token.")
             return
             # NO AUTH
 
@@ -605,7 +661,7 @@ You have been successfully logged out.
 
         #-- Remove both cookies if user not found.
         if not user:
-            debug.append('AUTH: User %s not in DB.' % user_name)
+            debug.debug_append('AUTH: User %s not in DB.' % user_name)
             cookie_crumble('user_name')
             cookie_crumble('auth_token')
             return
@@ -621,7 +677,7 @@ You have been successfully logged out.
 
         #-- Verify against DB. Remove cookies if no match.
         if not auth_token == hashed_auth:
-            debug.append('AUTH: Auth token not matched for user %s.'% user_name)
+            debug.debug_append('AUTH: Auth token not matched for user %s.'% user_name)
             cookie_crumble('user_name')
             cookie_crumble('auth_token')
             return
@@ -640,38 +696,45 @@ You have been successfully logged out.
 
 <%def name="user_can_edit_entry(entry)">
     <%
-        if not entry:
-            return False
-
-        if not 'user' in request_data['telegraph']:
-            return False
-
-        if entry.get('author') == request_data['telegraph']['user']['user_name']:
+        if auth_state() == 'admin':       # Admin: can edit everything
             return True
 
-        if request_data['telegraph']['user']['admin']:
-            return True
+        if auth_state() == 'user':        # User: can edit his own articles
+            user = request_data['telegraph']['user']
+            if user['user_name'] == entry.get('author'):
+                return True
+
+        return False                    # Not logged in: can't edit anything
     %>
 </%def>
 
 <%def name="db_connect()">
+    <%def name="connect_error()">
+        <%
+            request_data['path_nodes'].append('Offline')
+        %>
+        <h1>This area of the site is currently offline.</h1>
+        Please try again soon.
+    </%def>
     <%
-        connection = Connection(
-            site.conf['telegraph']['host'],
-            site.conf['telegraph']['port']
-        )
-        db = connection[site.conf['telegraph']['db']]
+        try:
+            connection = Connection(
+                site.conf['telegraph']['host'],
+                site.conf['telegraph']['port']
+            )
+        except errors.AutoReconnect as e:
+            connect_error()
+            raise
 
-        request_data['telegraph'] = {
-            'db': db
-        }
+        db = connection[site.conf['telegraph']['db']]
+        request_data['telegraph']['db'] = db
     %>
 </%def>
 
 <%def name="pretty_print(something)">
     <%
         pp = pprint.PrettyPrinter(indent=4)
-        debug.append(pp.pformat(something))
+        debug.debug_append(pp.pformat(something))
     %>
 </%def>
 
