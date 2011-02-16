@@ -44,7 +44,6 @@ extra_libraries:
 #   default: []
 template_directories:
     - "/srv/project/fadelisk/template"
-    - "/srv/project/fadelisk/packages"
 
 #-- BIND ADDRESS:
 #   default: "0.0.0.0"
