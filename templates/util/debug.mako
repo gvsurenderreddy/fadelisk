@@ -1,9 +1,12 @@
 
+<%!
+    import pprint
+%>
+
 <%def name="debug_append(message)">
     <%
         if not 'debug' in request_data:
             return
-
         if not site.conf['debug']:
             return
 
@@ -15,10 +18,8 @@
     <%
         if not 'debug' in request_data:
             return
-
         if not site.conf['debug']:
             return
-
         if not request_data['debug']:
             return
 
@@ -39,4 +40,10 @@
     </div>
 </%def>
 
+<%def name="pretty_print(something)">
+    <%
+        pp = pprint.PrettyPrinter(indent=4)
+        debug_append(pp.pformat(something))
+    %>
+</%def>
 
