@@ -3,9 +3,9 @@
 <%namespace name="formula" file="/form/formula.mako" />
 <%namespace name="redirect" file="/util/redirect.mako" inheritable="True" />
 
-<%namespace name="telegraph_auth" file="/packages/telegraph/auth.mako" />
-<%namespace name="telegraph_display" file="/packages/telegraph/display.mako" />
-<%namespace name="telegraph_database" file="/packages/telegraph/database.mako"/>
+<%namespace name="auth" file="/packages/telegraph/auth.mako" />
+<%namespace name="display" file="/packages/telegraph/display.mako" />
+<%namespace name="database" file="/packages/telegraph/database.mako"/>
 
 <%!
     import datetime
@@ -38,20 +38,11 @@
     <%
         request_data['telegraph'] = {}          # Establish/clear local store
         try:
-            telegraph_database.db_connect()
+            database.db_connect()
         except errors.AutoReconnect:
             return                              # Error handled by db_connect()
 
-        telegraph_auth.check_auth()
-
-        # Resolve auth mode
-        # TODO: Blend into check_auth()
-        request_data['telegraph']['auth_state'] = 'noauth'
-        if 'user' in request_data['telegraph']:
-            user = request_data['telegraph']['user']
-            request_data['telegraph']['auth_state'] = 'user'
-            if user['user_name'] == 'admin' or user.get('admin', False):
-                request_data['telegraph']['auth_state'] = 'admin'
+        auth.check_auth()
     %>
 </%def>
 
@@ -80,14 +71,14 @@
         }
         items = ['./', '?action=list']
         indicators = []
-        if 'user' in request_data['telegraph']:
+        if auth.state() != 'noauth':
             indicators = [
-                telegraph_database.get_user_full_name(
+                database.get_user_full_name(
                     request_data['telegraph']['user']
                 )
             ]
             items.extend([ '?action=new', '?action=logout' ])
-            if request_data['telegraph']['user'].get('admin'):
+            if auth.state_is_admin():
                 items[-1:-1] = [ '?action=links', '?action=users' ]
         else:
             items = [ '?action=login' ]
@@ -119,8 +110,8 @@
                 redirect.refresh('./')
         else:
             actions = {
-                'login': telegraph_auth.login,
-                'logout': telegraph_auth.logout,
+                'login': auth.login,
+                'logout': auth.logout,
                 'list': entry_list,
                 'new': entry_new,
             }
@@ -133,14 +124,14 @@
                 else:
                     redirect.refresh('./')
 
-        telegraph_display.recent()
+        display.recent()
     %>
 </%def>
 
 <%def name="entry_list()">
     <%
         request_data['path_nodes'].append('List Entries')
-        entries = telegraph_database.fetch_entries()
+        entries = database.fetch_entries()
 
         if not entries:
             context.write('No entries are available.')
@@ -149,7 +140,7 @@
 
     <table class="spreadsheet" style="width: 99%; margin: 10pt auto;">
         <thead>
-            % if request_data['telegraph']['auth_state'] == 'admin':
+            % if auth.state_is_admin():
                 <td>Visible</td>
             % endif
             <td>Time</td>
@@ -160,7 +151,7 @@
         <tbody>
             % for entry in entries:
                 <tr>
-                    % if request_data['telegraph']['auth_state'] == 'admin':
+                    % if auth.state_is_admin():
                         <td class="center">
                             % if entry.get('visible'):
                               <span style="color: #1e1">&bull;</span>
@@ -180,14 +171,14 @@
                             entry_author = entry.get('author')
                         %>
                         % if entry_author:
-                            ${telegraph_database.get_user_full_name(telegraph_auth.get_user(entry_author))}
+                            ${database.get_user_full_name(auth.get_user(entry_author))}
                         % endif
                     </td>
                 </tr>
             % endfor
         </tbody>
         <tfoot>
-            % if request_data['telegraph']['auth_state'] == 'admin':
+            % if auth.state_is_admin():
                 <td></td>
             % endif
             <td></td>
@@ -200,7 +191,7 @@
 
 <%def name="entry_view(entry_id)">
     <%
-        entry = telegraph_database.get_entry(entry_id)
+        entry = database.get_entry(entry_id)
 
         if not entry:
             context.write('<h1>No Such Entry</h1>')
@@ -211,7 +202,7 @@
         # Allow if visible to all
         if entry.get('visible'):
             request_data['path_nodes'].append('View Entry')
-            telegraph_display.entry_full(entry)
+            display.entry_full(entry)
             return
 
         # Allow if user has admin privs, or user is author.
@@ -219,7 +210,7 @@
             user = request_data['telegraph']['user']
             if user.get('admin') or user['user_name'] == entry.get('author'):
                 request_data['path_nodes'].append('View Entry')
-                telegraph_display.entry_full(entry)
+                display.entry_full(entry)
                 return
 
         # Adminish about authorship (or admin privs, but leave that out) 
@@ -232,18 +223,18 @@
 
 <%def name="entry_edit(entry_id)">
     <%
-        if telegraph_auth.need_login('You must be logged in to edit entries.'):
+        if auth.need_login('You must be logged in to edit entries.'):
             return
 
         request_data['path_nodes'].append('Edit Entry')
         #:: ANY method
-        entry = telegraph_database.get_entry(entry_id)
+        entry = database.get_entry(entry_id)
 
         if not entry:
             no_such_entry()
             return
 
-        if not telegraph_auth.user_can_edit_entry(entry):
+        if not auth.user_can_edit_entry(entry):
             error('To edit this entry, you must be its author '
                     + 'or have admin privileges.',
                 title='Permission Denied')
@@ -296,19 +287,19 @@
     <%
         request_data['path_nodes'].append('Delete Entry')
 
-        if telegraph_auth.auth_state() == 'noauth':
+        if auth.state() == 'noauth':
             error('To delete this entry, you must log in.',
                 title='Not Authenticated')
             return
 
-        entry = telegraph_database.get_entry(
+        entry = database.get_entry(
             entry_id,
             error_on_noexist=True
         )
         if not entry:
             return
 
-        if not telegraph_auth.user_can_edit_entry(entry):
+        if not auth.user_can_edit_entry(entry):
             error('To delete this entry, you must be its author '
                     + 'or have admin privileges.',
                 title='Permission Denied')

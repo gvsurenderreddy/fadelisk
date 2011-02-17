@@ -1,7 +1,7 @@
 
 <%namespace name="menu" file="/layout/menu.mako" />
-<%namespace name="telegraph_auth" file="/packages/telegraph/auth.mako" />
-<%namespace name="telegraph_database" file="/packages/telegraph/database.mako"/>
+<%namespace name="auth" file="/packages/telegraph/auth.mako" />
+<%namespace name="database" file="/packages/telegraph/database.mako"/>
 
 <%!
     import datetime
@@ -26,7 +26,7 @@
         author = []
         author_full_name = 'Lost+Found'
         if 'author' in entry:
-            author = telegraph_auth.get_user(entry['author'])
+            author = auth.get_user(entry['author'])
             if author:
                 author_full_name = author.get('full_name', 'Lost+Found')
     %>
@@ -36,7 +36,7 @@
         </p>
         <p class="header left">${author_full_name}</p>
         <p class="header right">${entry_time}</p>
-        % if telegraph_auth.user_can_edit_entry(entry):
+        % if auth.user_can_edit_entry(entry):
             <div class="toolbar">
                 <%
                     override = {
@@ -59,7 +59,7 @@
 <%def name="recent()">
 <%
     request_data['path_nodes'].append('Recent Entries')
-    entries = telegraph_database.fetch_entries()
+    entries = database.fetch_entries()
 
     if not entries:
         context.write('No entries are available.')

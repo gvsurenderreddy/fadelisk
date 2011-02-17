@@ -1,6 +1,5 @@
 
-<%namespace name="telegraph_auth" file="/packages/telegraph/auth.mako" />
-##<%namespace name="telegraph_display" file="/packages/telegraph/display.mako" />
+<%namespace name="auth" file="/packages/telegraph/auth.mako" />
 
 <%!
     from pymongo import Connection, ASCENDING, DESCENDING, errors
@@ -59,11 +58,10 @@
 
 <%def name="fetch_entries()">
 <%
-    _auth_state = telegraph_auth.auth_state()
-    if _auth_state == 'admin':
+    if auth.state() == 'admin':
         # Admin: All entries
         query = None
-    elif _auth_state == 'user':
+    elif auth.state() == 'user':
         # User: All entries either visible or author matches user_name
         query = {
             '$or': [

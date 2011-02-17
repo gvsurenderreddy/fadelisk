@@ -9,9 +9,14 @@
 
 <%def name="check_auth()">
     <%doc>
-        If logged in, be sure that auth_token hasn't been tampered with.
+        Determine auth state.
     </%doc>
     <%
+        # Fetch telegraph data struct for neatness.
+        telegraph_data = request_data['telegraph']
+
+        telegraph_data['auth_state'] = 'noauth'
+
         #-- If possible, fetch the auth tokens from stored cookies.
         user_name = request.getCookie('user_name')
         auth_token = request.getCookie('auth_token')
@@ -39,6 +44,7 @@
             cookie_crumble('user_name')
             cookie_crumble('auth_token')
             return
+            # NO AUTH
 
         #-- Build auth_token hash
         sha256 = hashlib.new('sha256')
@@ -59,32 +65,51 @@
 
         #-- SUCCESS
 
-        # Ensure an admin bit, basing it on the user_name if necessary.
-        user.setdefault('admin', (username == 'admin'))
+        # Cache data.
+        telegraph_data['user'] = user
+        telegraph_data['auth_token'] = auth_token
+        telegraph_data['auth_state'] = 'user'
 
-        #-- Cache data.
-        request_data['telegraph']['user'] = user
-        request_data['telegraph']['auth_token'] = auth_token
+        # Promote the auth state if user has admin privileges.
+        if user['user_name'] == 'admin' or user.get('admin', False):
+            telegraph_data['auth_state'] = 'admin'
     %>
 </%def>
 
 <%def name="user_can_edit_entry(entry)">
     <%
-        if auth_state() == 'admin':       # Admin: can edit everything
+        if state_is_admin():         # Admin: can edit everything
             return True
 
-        if auth_state() == 'user':        # User: can edit his own entries
-            user = request_data['telegraph']['user']
-            if user['user_name'] == entry.get('author'):
+        if state() == 'user':        # User: can edit his own entries
+            if user('user_name') == entry.get('author'):
                 return True
 
         return False                    # Not logged in: can't edit anything
     %>
 </%def>
 
-<%def name="auth_state()">
+<%def name="user(column=None)">
     <%
-        return request_data['telegraph']['auth_state']
+        try:
+            user = request_data['telegraph']['user']
+            if column:
+                return user.get(column)
+            return user
+        except KeyError:
+            return None
+    %>
+</%def>
+
+<%def name="state()">
+    <%
+        return request_data['telegraph'].get('auth_state', 'noauth')
+    %>
+</%def>
+
+<%def name="state_is_admin()">
+    <%
+        return state() == 'admin'
     %>
 </%def>
 
@@ -170,7 +195,7 @@ You have been successfully logged out.
 
 <%def name="need_login(message=None)">
     <%
-        if 'user' in request_data['telegraph']:
+        if state() is 'noauth':
             return False
 
         login_form(message or 'You must be logged in to perform this action.')
@@ -180,7 +205,9 @@ You have been successfully logged out.
 
 <%def name="get_user(user_name)">
     <%
-        return request_data['telegraph']['db']['users'].find_one({'user_name': user_name})
+        return request_data['telegraph']['db']['users'].find_one(
+            {'user_name': user_name}
+        )
     %>
 </%def>
 
