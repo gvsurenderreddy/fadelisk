@@ -37,13 +37,13 @@ site_collections:
 #   to sys.path
 #   default: []
 extra_libraries:
-    - "/srv/www/site/lib/python"
+    - "/srv/www/lib/python"
 
 #-- TEMPLATES: Directories with heirarchies of mako templates. These will
 #   be searched in order for a template at a given path.
 #   default: []
 template_directories:
-    - "/srv/project/fadelisk/template"
+    - "/srv/project/fadelisk/templates"
 
 #-- BIND ADDRESS:
 #   default: "0.0.0.0"
