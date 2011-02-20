@@ -1,6 +1,7 @@
 
 <%namespace name="menu" file="/layout/menu.mako" />
 <%namespace name="formula" file="/form/formula.mako" />
+<%namespace name="debug" file="/util/debug.mako" />
 <%namespace name="redirect" file="/util/redirect.mako" inheritable="True" />
 
 <%namespace name="auth" file="/packages/telegraph/auth.mako" />
@@ -27,8 +28,20 @@
 %>
 
 <%def name="app()">
+    <%def name="connect_error()">
+        <% 
+            request_data['path_nodes'].append('Offline')
+        %>
+        <h1>This area of the site is currently offline.</h1>
+        Please try again soon.
+    </%def>
     <%
-        init();
+        try:
+            init();
+        except errors.AutoReconnect as e:
+            debug.append_traceback(e)
+            connect_error()
+            return
         submenu();
         dispatch();
     %>
@@ -37,11 +50,7 @@
 <%def name="init()">
     <%
         request_data['telegraph'] = {}          # Establish/clear local store
-        try:
-            database.db_connect()
-        except errors.AutoReconnect:
-            return                              # Error handled by db_connect()
-
+        database.db_connect()
         auth.check_auth()
     %>
 </%def>
@@ -206,6 +215,7 @@
             return
 
         # Allow if user has admin privs, or user is author.
+        # TODO: reconcile
         if 'user' in request_data['telegraph']:
             user = request_data['telegraph']['user']
             if user.get('admin') or user['user_name'] == entry.get('author'):
@@ -287,9 +297,7 @@
     <%
         request_data['path_nodes'].append('Delete Entry')
 
-        if auth.state() == 'noauth':
-            error('To delete this entry, you must log in.',
-                title='Not Authenticated')
+        if auth.need_login('You must be logged in to delete entries.'):
             return
 
         entry = database.get_entry(
@@ -322,11 +330,9 @@
 
 <%def name="entry_new()">
     <%
-        if not 'user' in request_data['telegraph']:
-            login_form(message='You must be logged in to create a new entry.')
+        if auth.need_login('You must be logged in to create entries.'):
             return
-    %>
-    <%
+
         if request.method == 'GET':
             request_data['path_nodes'].append('New Entry')
             entry_form({'visible': True})

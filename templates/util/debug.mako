@@ -1,9 +1,10 @@
 
 <%!
+    import traceback
     import pprint
 %>
 
-<%def name="debug_append(message)">
+<%def name="append(message)">
     <%
         if not 'debug' in request_data:
             return
@@ -14,7 +15,15 @@
     %>
 </%def>
 
-<%def name="debug_display()">
+<%def name="append_traceback(exc=None)">
+    <%
+        if exc:
+            append('* EXCEPTION: %s' % str(exc))
+        append(traceback.format_exc())
+    %>
+</%def>
+
+<%def name="display()">
     <%
         if not 'debug' in request_data:
             return

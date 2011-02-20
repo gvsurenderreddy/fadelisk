@@ -11,22 +11,11 @@
 
 
 <%def name="db_connect()">
-    <%def name="connect_error()">
-        <%
-            request_data['path_nodes'].append('Offline')
-        %>
-        <h1>This area of the site is currently offline.</h1>
-        Please try again soon.
-    </%def>
     <%
-        try:
-            connection = Connection(
-                site.conf['telegraph']['host'],
-                site.conf['telegraph']['port']
-            )
-        except errors.AutoReconnect as e:
-            connect_error()
-            raise
+        connection = Connection(
+            site.conf['telegraph']['host'],
+            site.conf['telegraph']['port']
+        )
 
         db = connection[site.conf['telegraph']['db']]
         request_data['telegraph']['db'] = db
