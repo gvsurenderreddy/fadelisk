@@ -89,15 +89,9 @@ class Server(object):
                 self.vhost.addHost(site_, this_site.resource)
 
                 # Add hosts for each aliases. Re-use the resource.
-                try:
-                    site_aliases = site_conf['site_aliases']
-                except KeyError:
-                    continue
-                else:
-                    if site_aliases != None:
-                        for alias in site_aliases:
-                            print(' +', alias)
-                            self.vhost.addHost(alias, this_site.resource)
+                for alias in site_conf.get('site_aliases', []):
+                    print(' +', alias)
+                    self.vhost.addHost(alias, this_site.resource)
 
     def reopen_std_streams(self):
         null_fd = os.open('/dev/null', os.O_RDWR)
