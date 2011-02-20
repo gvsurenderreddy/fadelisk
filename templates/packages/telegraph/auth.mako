@@ -195,7 +195,7 @@ You have been successfully logged out.
 
 <%def name="need_login(message=None)">
     <%
-        if state() is 'noauth':
+        if state() != 'noauth':
             return False
 
         login_form(message or 'You must be logged in to perform this action.')
