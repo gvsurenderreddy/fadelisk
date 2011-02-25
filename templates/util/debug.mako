@@ -52,7 +52,7 @@
 <%def name="pretty_print(something)">
     <%
         pp = pprint.PrettyPrinter(indent=4)
-        debug_append(pp.pformat(something))
+        append(pp.pformat(something))
     %>
 </%def>
 
