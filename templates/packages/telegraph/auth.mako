@@ -2,6 +2,7 @@
 <%namespace file="/util/cookie.mako" import="cookie_set, cookie_crumble"/>
 <%namespace name="form" file="/form/form.mako" />
 <%namespace name="redirect" file="/util/redirect.mako" />
+<%namespace name="debug" file="/util/debug.mako" />
 
 <%!
     import hashlib
@@ -31,7 +32,7 @@
 
         #-- No authentication token? (Leave user_name if set.) 
         if not auth_token:
-            debug.debug_append("AUTH: No auth token.")
+            debug.append("AUTH: No auth token.")
             return
             # NO AUTH
 
@@ -40,7 +41,7 @@
 
         #-- Remove both cookies if user not found.
         if not user:
-            debug.debug_append('AUTH: User %s not in DB.' % user_name)
+            debug.append('AUTH: User %s not in DB.' % user_name)
             cookie_crumble('user_name')
             cookie_crumble('auth_token')
             return
@@ -57,7 +58,7 @@
 
         #-- Verify against DB. Remove cookies if no match.
         if not auth_token == hashed_auth:
-            debug.debug_append('AUTH: Auth token not matched for user %s.'% user_name)
+            debug.append('AUTH: Auth token not matched for user %s.'% user_name)
             cookie_crumble('user_name')
             cookie_crumble('auth_token')
             return
