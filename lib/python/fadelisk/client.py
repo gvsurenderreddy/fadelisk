@@ -1,8 +1,5 @@
 #!/usr/bin/env python
 
-import os
-import sys
-
 from twisted.internet import reactor, protocol, defer
 from twisted.protocols import basic
 

@@ -1,6 +1,5 @@
 #!/usr/bin/env python
 
-import sys
 import os
 from twisted.web import resource, static, script
 from mako.lookup import TemplateLookup
