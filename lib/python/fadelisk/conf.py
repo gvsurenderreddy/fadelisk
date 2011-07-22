@@ -14,6 +14,9 @@ class ConfDict(object):
     def __init__(self):
         self.data = {}
 
+    def data(self):
+        return self.data
+
     def __getitem__(self, key):
         return self.data[key]
 
