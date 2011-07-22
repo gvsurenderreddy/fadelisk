@@ -45,13 +45,18 @@ class ProcessorHTML(resource.Resource):
             path = ''.join([path, 'index.html'])
         template = self.site.template_lookup.get_template(path)
 
-        return template.render(
+        request_data = {}
+        content = template.render(
             request=request,
-            request_data={},
+            request_data=request_data,
             site=self.site,
             site_path=self.site.path,
             **self.site.template_context
         )
+        content_type = request_data.get('content_type', None)
+        if content_type:
+            request.setHeader('Content-type', content_type)
+        return request_data.get('payload', None) or content
 
 
 class ErrorResource(resource.Resource):
