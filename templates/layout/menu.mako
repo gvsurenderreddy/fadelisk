@@ -27,7 +27,7 @@
     </div>
 </%def>
 
-<%def name="list(
+<%def name="ul(
     items=[],
     override={},
     indications=[],
