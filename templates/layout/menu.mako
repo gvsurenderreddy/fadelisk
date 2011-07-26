@@ -50,7 +50,7 @@
                 else:
                     title = page_title(item)
         %>
-        <li><a href="${item}">%{title}</a></li>
+        <li><a href="${item}">${title}</a></li>
         % endfor
         % for indication in indications:
             <li><span>${indication}</span></li>
