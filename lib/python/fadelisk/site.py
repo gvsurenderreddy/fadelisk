@@ -50,12 +50,8 @@ class ProcessorHTML(resource.Resource):
             request=request,
             request_data=request_data,
             site=self.site,
-            site_path=self.site.path,
             **self.site.template_context
         )
-        content_type = request_data.get('content_type', None)
-        if content_type:
-            request.setHeader('Content-type', content_type)
         return request_data.get('payload', None) or content
 
 
@@ -78,7 +74,6 @@ class ErrorResource(resource.Resource):
             request=request,
             request_data={},
             site=self.site,
-            site_path=self.site.path,
             **self.site.template_context
         )
 
