@@ -140,19 +140,6 @@ class Server(object):
         if pid:
             os._exit(0)
 
-    def set_proc_title(self, title):
-        # prctl(15, ...) is PR_SET_NAME
-        try:
-            import ctypes
-            libc = ctypes.CDLL('libc.so.6')
-            libc.prctl(15, title, 0, 0, 0)
-        except:
-            try:
-                import dl
-                libc = dl.open('/lib/libc.so.6')
-                libc.call('prctl', 15, '%s\0' % title, 0, 0, 0)
-            except:
-                pass
 
 def start(options, args, conf):
     Server(options, args, conf).start()
