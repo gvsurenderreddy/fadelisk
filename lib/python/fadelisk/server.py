@@ -22,14 +22,13 @@ class ServerControlFactory(protocol.ServerFactory):
     protocol = ServerControlProtocol
 
 class Server(object):
-    def __init__(self, options, args, conf):
-        self.options = options
-        self.conf = conf
+    def __init__(self, conf, args):
         self.args = args
+        self.conf = conf
         self.sites = []
 
         self.vhost = vhost.NameVirtualHost()
-        self.vhost.default=static.File("/var/www/nginx-default")
+        self.vhost.default=static.File("/var/www")
         self.gather_sites()
         self.ubersite = server.Site(self.vhost)
 
@@ -141,8 +140,7 @@ class Server(object):
             os._exit(0)
 
 
-def start(options, args, conf):
-    Server(options, args, conf).start()
-
+def start(conf, args):
+    return Server(conf, args).start()
 
 

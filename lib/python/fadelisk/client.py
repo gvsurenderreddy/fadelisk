@@ -43,10 +43,9 @@ class ClientFactory(protocol.ClientFactory):
 
 
 class Client(object):
-    def __init__(self, options, args, conf):
-        self.options = options
-        self.args = args
+    def __init__(self, conf, args):
         self.conf = conf
+        self.args = args
 
     def start(self):
         client = ClientFactory()
@@ -60,6 +59,6 @@ class Client(object):
         reactor.run()
 
 
-def start(options, args, conf):
-    return Client(options, args, conf).start()
+def start(conf, args):
+    return Client(conf, args).start()
 
