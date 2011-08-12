@@ -90,7 +90,6 @@ class ConfJSON(ConfDict):
             self.refresh()
         return ConfDict.__getitem__(self, key)
 
-
     def refresh(self):
         mtime = os.stat(self.filename).st_mtime
         if mtime != self.timestamp:
@@ -169,7 +168,7 @@ def ConfHunterFactory(cls, filename, locations=None, ignore_changes=False):
         ]
 
     for location in locations:
-        conf_file = os.sep.join([location, filename])
+        conf_file = os.path.join(location, filename)
         if os.access(conf_file, os.R_OK):            # readable?
             return cls(conf_file, ignore_changes=ignore_changes)
         raise RuntimeError, "Could not find %s" % filename
