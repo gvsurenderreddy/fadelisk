@@ -6,6 +6,10 @@ import sys
 import yaml
 import json
 
+class ConfNotFoundError(Exception):
+     def __init__(self, *args):
+         Exception.__init__(self, *args)
+
 class ConfFormatError(Exception):
      def __init__(self, *args):
          Exception.__init__(self, *args)
@@ -43,6 +47,9 @@ class ConfDict(object):
 
     def get(self, key, default=None):
         return self.data.get(key, default)
+
+    def setdefault(self, key, value):
+        self.data.setdefault(key, value)
 
     def soft_set(self, key, value):
         self.data.setdefault(key, value)
@@ -177,5 +184,5 @@ def ConfHunterFactory(cls, filename, locations=None, ignore_changes=False):
         conf_file = os.path.join(location, filename)
         if os.access(conf_file, os.R_OK):            # readable?
             return cls(conf_file, ignore_changes=ignore_changes)
-        raise RuntimeError, "Could not find %s" % filename
+        raise ConfNotFoundError, "Could not find %s" % filename
 

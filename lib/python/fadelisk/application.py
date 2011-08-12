@@ -52,25 +52,30 @@ class Application(object):
 
         #-- Otherwise, search for the file.
         # Compute script location and interpolate into list of locations.
-        script_parent = os.path.realpath(
-            os.path.join(os.path.dirname(sys.argv[0]), '..'))
+        script_path = os.path.realpath(sys.argv[0])
+        script_dir = os.path.realpath(os.path.dirname(script_path))
+        script_parent = os.path.realpath(os.path.join(script_dir, '..'))
         locations = []
         for location in Application.conf_file_locations:
             if location.startswith('@PARENT@'):
                 location = script_parent + location[8:]
             locations.append(location)
-        self.conf = conf.ConfHunterFactory(conf.ConfYAML,
-                                           Application.conf_file_name,
-                                           locations,
-                                           ignore_changes=True)
+        try:
+            self.conf = conf.ConfHunterFactory(conf.ConfYAML,
+                                               Application.conf_file_name,
+                                               locations,
+                                               ignore_changes=True)
+        except conf.ConfNotFoundError:
+            # Fall back to an empty ConfDict
+            self.conf = conf.ConfDict()
 
-        # TODO: Hard-update some options from the command line.
+        # TODO: Hard-update some options from the command line
         # ...no options yet.
 
-        #-- Update missing values with hard-coded defaults.
-        # Independent
+        #-- Update missing values with hard-coded defaults
+        # Independent:
         self.conf.soft_update(Application.default_conf)
-        # Dependent
+        # Dependent:
         self.conf.soft_update(
             {
                 'control_port': self.conf['listen_port']+1,
