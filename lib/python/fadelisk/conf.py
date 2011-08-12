@@ -74,6 +74,8 @@ class ConfYAML(ConfDict):
         if mtime != self.timestamp:
             with open(self.filename) as yaml_file:
                 self.data = yaml.load(yaml_file)
+            if not isinstance(self.data, dict):
+                raise ConfFormatError('ConfYAML target must be a dictionary')
             self.timestamp = mtime
 
 
@@ -95,6 +97,8 @@ class ConfJSON(ConfDict):
         if mtime != self.timestamp:
             with open(self.filename) as json_file:
                 self.data = json.load(json_file)
+            if not isinstance(self.data, dict):
+                raise ConfFormatError('ConfJSON target must be a dictionary')
             self.timestamp = mtime
 
 
