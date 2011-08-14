@@ -111,8 +111,6 @@ class ConfJSON(ConfDynamicDict):
         if mtime != self.timestamp:
             with open(self.filename) as json_file:
                 self.data = json.load(json_file)
-            if not isinstance(self.data, dict):
-                raise ConfFormatError('ConfJSON target must be a dictionary')
             self.timestamp = mtime
 
 
@@ -124,6 +122,7 @@ class ConfList(list):
         list.__init__(self)
         self.filename = filename
         self.ignore_changes = ignore_changes
+        self.lock = threading.Lock()
         self.refresh()
 
     def __iter__(self):
@@ -144,9 +143,10 @@ class ConfList(list):
     def refresh(self):
         mtime = os.stat(self.filename).st_mtime
         if mtime != self._timestamp:
-            with open(self.filename) as f:
-                self[:] = [line for line in f]
-            self._timestamp = mtime
+            with self.lock:
+                with open(self.filename) as f:
+                    self[:] = [line for line in f]
+                self._timestamp = mtime
 
 
 class ConfFileContents(object):
@@ -158,14 +158,16 @@ class ConfFileContents(object):
     def __init__(self, filename, ignore_changes=False):
         self.filename = filename
         self.ignore_changes = ignore_changes
+        self.lock = threading.Lock()
         self.refresh()
 
     def refresh(self):
         mtime = os.stat(self.filename).st_mtime
         if mtime != self._timestamp:
-            with open(self.filename) as f:
-                self._data = f.read()
-            self._timestamp = mtime
+            with self.lock:
+                with open(self.filename) as f:
+                    self._data = f.read()
+                self._timestamp = mtime
 
     def contents(self):
         if not self.ignore_changes:
