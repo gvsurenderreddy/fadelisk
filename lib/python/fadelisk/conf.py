@@ -19,13 +19,16 @@ class ConfFormatError(Exception):
 
 
 class ConfDict(dict):
+    def __init__(self, *args, **kwargs):
+        dict.__init__(self, *args, **kwargs)
+        self.lock = threading.Lock()
+
     def soft_update(self, data):
         for key, value in data.items():
             self.setdefault(key, value)
 
     def replace(self, data):
-        lock = threading.Lock()
-        with lock:
+        with self.lock:
             self.clear()
             self.update(data)
 
