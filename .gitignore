@@ -1,2 +1,3 @@
 site/etc/ssl/*
 site/tmp/*
+*.pyc
