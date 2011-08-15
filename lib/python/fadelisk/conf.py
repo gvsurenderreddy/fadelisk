@@ -72,6 +72,8 @@ class ConfYAML(ConfDynamicDict):
     def __init__(self, filename, ignore_changes=False):
         ConfDynamicDict.__init__(self, ignore_changes)
         self.filename = filename
+
+        self.timestamp = None
         self.refresh()
 
     def __getitem__(self, key):
@@ -99,6 +101,8 @@ class ConfJSON(ConfDynamicDict):
     def __init__(self, filename, ignore_changes=False):
         ConfDynamicDict.__init__(self, ignore_changes)
         self.filename = filename
+
+        self.timestamp = None
         self.refresh()
 
     def __getitem__(self, key):
@@ -115,13 +119,12 @@ class ConfJSON(ConfDynamicDict):
 
 
 class ConfList(list):
-    _timestamp = None
-    filename = None
-
     def __init__(self, filename, ignore_changes=False):
         list.__init__(self)
         self.filename = filename
         self.ignore_changes = ignore_changes
+
+        self.timestamp = None
         self.lock = threading.Lock()
         self.refresh()
 
@@ -142,40 +145,38 @@ class ConfList(list):
 
     def refresh(self):
         mtime = os.stat(self.filename).st_mtime
-        if mtime != self._timestamp:
+        if mtime != self.timestamp:
             with self.lock:
                 with open(self.filename) as f:
                     self[:] = [line for line in f]
-                self._timestamp = mtime
+                self.timestamp = mtime
 
 
 class ConfFileContents(object):
-    _timestamp = None
-    _data = None
-
-    filename = None
-
     def __init__(self, filename, ignore_changes=False):
         self.filename = filename
         self.ignore_changes = ignore_changes
+
+        self.timestamp = None
+        self.data = None
         self.lock = threading.Lock()
         self.refresh()
 
     def refresh(self):
         mtime = os.stat(self.filename).st_mtime
-        if mtime != self._timestamp:
+        if mtime != self.timestamp:
             with self.lock:
                 with open(self.filename) as f:
-                    self._data = f.read()
-                self._timestamp = mtime
+                    self.data = f.read()
+                self.timestamp = mtime
 
     def contents(self):
         if not self.ignore_changes:
             self.refresh()
-        return self._data
+        return self.data
 
     def __str__(self):
-        return str(self._data)
+        return str(self.data)
 
 
 def ConfHunterFactory(cls, filename, locations=None, ignore_changes=False):
