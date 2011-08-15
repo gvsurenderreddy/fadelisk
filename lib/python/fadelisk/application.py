@@ -29,6 +29,7 @@ class Application(object):
     # parameters. In addition, parameters that depend on other parameters
     # are computed and added last, if necessary.
     default_conf = {
+        'verbose': False,
         'server': 'fadelisk 1.0 (barndt)',
         'listen_port': 1066,
         'bind_address': 'localhost',
@@ -69,8 +70,16 @@ class Application(object):
             # Fall back to an empty ConfDict
             self.conf = conf.ConfDict()
 
-        # TODO: Hard-update some options from the command line
-        # ...no options yet.
+        #-- Hard-update some options from the command line
+        #   Options added to the parser appear in the values even if they
+        #   have not been specified on the command line. Care must be
+        #   taken not to overwrite a value in the conf with a default
+        #   value from a command line option. Since current options
+        #   have no default values and cannot be specified in the negative,
+        #   it's safe, for now, to set a conf option if it isn't None.
+        for option, value in self.options.__dict__.iteritems():
+            if value != None:
+                self.conf[option] = value
 
         #-- Update missing values with hard-coded defaults
         # Independent:
@@ -88,9 +97,14 @@ class Application(object):
         version = '%prog 1.0 (barndt)'
         self.parser = OptionParser(usage=usage, version=version)
         self.parser.add_option("-c", "--conf",
-            help="configuration file",
-            action="store", dest="conf_file"
-        )
+                               help="configuration file",
+                               action="store",
+                               dest="conf_file")
+        self.parser.add_option("-v", "--verbose",
+                               help="display more detailed information",
+                               action="store_true",
+                               dest="verbose",
+                              )
         (self.options, self.args) = self.parser.parse_args()
 
     def dispatch(self):
