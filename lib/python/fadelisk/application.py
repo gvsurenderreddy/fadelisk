@@ -45,52 +45,40 @@ class Application(object):
         self.dispatch()
 
     def load_conf(self):
+        #-- Update default configuration with some dependent options
+        default_conf = conf.ConfDict(Application.default_conf)
+        default_conf.soft_update({
+            'control_port': default_conf['listen_port']+1,
+            'control_address': default_conf['bind_address']
+        })
+
         #-- If a configuration file was specified on the command line, load it.
         if self.options.conf_file:
-            self.conf = conf.ConfYAML(self.options.conf_file,
+            application_conf = conf.ConfYAML(self.options.conf_file,
                                       ignore_changes=True)
-            return
+        else:
+            #-- Otherwise, let the hunter try to find it.
+            # Compute script location and interpolate into list of locations.
+            script_path = os.path.realpath(sys.argv[0])
+            script_dir = os.path.realpath(os.path.dirname(script_path))
+            script_parent = os.path.realpath(os.path.join(script_dir, '..'))
+            locations = []
+            for location in Application.conf_file_locations:
+                if location.startswith('@PARENT@'):
+                    location = script_parent + location[8:]
+                locations.append(location)
+            try:
+                application_conf = conf.ConfHunterFactory(conf.ConfYAML,
+                                                   Application.conf_file_name,
+                                                   locations,
+                                                   ignore_changes=True)
+            except conf.ConfNotFoundError:
+                # If the hunter can't find it, fall back to an empty ConfDict
+                application_conf = conf.ConfDict()
 
-        #-- Otherwise, search for the file.
-        # Compute script location and interpolate into list of locations.
-        script_path = os.path.realpath(sys.argv[0])
-        script_dir = os.path.realpath(os.path.dirname(script_path))
-        script_parent = os.path.realpath(os.path.join(script_dir, '..'))
-        locations = []
-        for location in Application.conf_file_locations:
-            if location.startswith('@PARENT@'):
-                location = script_parent + location[8:]
-            locations.append(location)
-        try:
-            self.conf = conf.ConfHunterFactory(conf.ConfYAML,
-                                               Application.conf_file_name,
-                                               locations,
-                                               ignore_changes=True)
-        except conf.ConfNotFoundError:
-            # Fall back to an empty ConfDict
-            self.conf = conf.ConfDict()
-
-        #-- Hard-update some options from the command line
-        #   Options added to the parser appear in the values even if they
-        #   have not been specified on the command line. Care must be
-        #   taken not to overwrite a value in the conf with a default
-        #   value from a command line option. Since current options
-        #   have no default values and cannot be specified in the negative,
-        #   it's safe, for now, to set a conf option if it isn't None.
-        for option, value in self.options.__dict__.iteritems():
-            if value != None:
-                self.conf[option] = value
-
-        #-- Update missing values with hard-coded defaults
-        # Independent:
-        self.conf.soft_update(Application.default_conf)
-        # Dependent:
-        self.conf.soft_update(
-            {
-                'control_port': self.conf['listen_port']+1,
-                'control_address': self.conf['bind_address']
-            }
-        )
+        # Build the stack of configurations.
+        self.conf = conf.ConfStack([application_conf, default_conf],
+                                   optparse=self.options.__dict__)
 
     def parse_args(self):
         usage = 'usage: %prog [options] start | stop | client | command'

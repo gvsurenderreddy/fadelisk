@@ -179,6 +179,36 @@ class ConfFileContents(object):
         return str(self.data)
 
 
+class ConfStack(object):
+    def __init__(self, stack, optparse={}):
+        self.stack = stack
+        self.optparse = optparse
+
+    def __getitem__(self, key):
+        # Optparse must be handled specially because keys appear even if
+        # a given option hasn't been specified on the command line. Check
+        # for None instead of looking for the presence of a key.
+        try:
+            if self.optparse[key] != None:
+                return self.optparse[key]
+        except KeyError:
+            pass
+
+        # Check the rest of the stack in order. The first matching key
+        # is returned.
+        for conf in self.stack:
+            if key in conf:
+                return conf[key]
+
+        raise KeyError, '%s not in configuration stack' % key
+
+    def get(self, key, default=None):
+        try:
+            return self.__getitem__(key)
+        except KeyError:
+            return default
+
+
 def ConfHunterFactory(cls, filename, locations=None, ignore_changes=False):
     if locations == None:
         script_parent = os.path.join([os.path.dirname(sys.argv[0]), '..'])
