@@ -37,7 +37,6 @@ class ConfDynamicDict(ConfDict):
     def __init__(self, ignore_changes=False):
         ConfDict.__init__(self)
         self.ignore_changes = ignore_changes
-        self.timestamp = None
 
     def abort_if_dynamic(self):
         if self.ignore_changes:
@@ -114,7 +113,7 @@ class ConfJSON(ConfDynamicDict):
         mtime = os.stat(self.filename).st_mtime
         if mtime != self.timestamp:
             with open(self.filename) as json_file:
-                self.data = json.load(json_file)
+                self._replace(json.load(json_file))
             self.timestamp = mtime
 
 
@@ -212,11 +211,7 @@ class ConfStack(object):
 def ConfHunterFactory(cls, filename, locations=None, ignore_changes=False):
     if locations == None:
         script_parent = os.path.join([os.path.dirname(sys.argv[0]), '..'])
-        locations = [
-            os.path.join(script_parent, 'etc'),
-            script_parent,
-            '.',
-        ]
+        locations = [os.path.join(script_parent, 'etc'), script_parent, '.']
 
     for location in locations:
         conf_file = os.path.join(location, filename)
