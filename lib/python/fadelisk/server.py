@@ -60,7 +60,7 @@ class Server(object):
         reactor.run()
 
     def gather_sites(self):
-        for collection in self.conf['site_collections'] or [ '/srv/www/site' ]:
+        for collection in self.conf['site_collections']:
             for site_ in os.listdir(collection):
                 site_path = os.path.join(os.path.abspath(collection), site_)
                 site_etc_path = os.path.join(site_path, 'etc')

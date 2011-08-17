@@ -7,12 +7,13 @@ import conf
 
 class ClientProtocol(basic.LineReceiver):
     def connectionMade(self):
-        print 'Connected.'
+        #print 'Connected.'
         self.sendLine("shutdown")
         #self.loseConnection()
 
     def connectionLost(self, reason):
-        print "connection lost"
+        pass
+        #print "connection lost"
 
     def sendMessage(self, msg):
         self.sendLine(msg)
@@ -24,13 +25,13 @@ class ClientFactory(protocol.ClientFactory):
     protocol = ClientProtocol
 
     def __init__(self):
-        print 'Factory init'
-        print self.__dict__
+        pass
         #self.channel = channel
         #self.filename = filename
 
     def startedConnecting(self, connector):
-        print 'Started to connect.'
+        pass
+        #print 'Started to connect.'
 
     def clientConnectionLost(self, connector, reason):
         #print 'Lost client connection.  Reason:', reason
