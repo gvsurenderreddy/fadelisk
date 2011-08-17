@@ -90,7 +90,7 @@
             if auth.state_is_admin():
                 items[-1:-1] = [ '?action=links', '?action=users' ]
         else:
-            items = [ '?action=login' ]
+            items[:0] = [ '?action=login' ]
 
         if not len(items):
             return
