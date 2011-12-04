@@ -217,5 +217,5 @@ def ConfHunterFactory(cls, filename, locations=None, ignore_changes=False):
         conf_file = os.path.join(location, filename)
         if os.access(conf_file, os.R_OK):            # readable?
             return cls(conf_file, ignore_changes=ignore_changes)
-        raise ConfNotFoundError, "Could not find %s" % filename
+    raise ConfNotFoundError, "Could not find %s" % filename
 
