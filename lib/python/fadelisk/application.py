@@ -20,7 +20,7 @@ class Application(object):
         '/etc',                 # Red Hat, SuSE
         '/srv/www/etc',         # FHS Service-centric location 
         # These values are interpolated at runtime.
-        '@PARENT@/etc',         # Self-contained
+        '@PARENT@/etc/fadelisk',# Self-contained
         '@PARENT@',             # Distribution?
     ]
     conf_file_name = 'fadelisk.yaml'
