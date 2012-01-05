@@ -33,7 +33,7 @@ class Application(object):
         'verbose': False,
         'server': 'fadelisk 1.0 (barndt)',
         'listen_port': 1066,
-        'bind_address': 'localhost',
+        'bind_address': '127.0.0.1',
         'process_user': 'www-data',
         'site_collections': ['/srv/www/site'],
         #'charm': {},

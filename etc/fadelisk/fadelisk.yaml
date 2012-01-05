@@ -46,8 +46,11 @@ template_directories:
     - "/srv/project/fadelisk/templates"
 
 #-- BIND ADDRESS:
-#   default: "0.0.0.0"
-# bind_address: "0.0.0.0"
+#   Address to listen on (a single address for now, except for the case of
+#   0.0.0.0, which binds the socket to all available interfaces.) Host names
+#   are allowed instead of addresses, but addresses are safer.
+#   default: "127.0.0.1"
+# bind_address: "127.0.0.1"
 
 #-- LISTEN PORT:
 #   default: 1066
