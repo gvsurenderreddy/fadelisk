@@ -140,6 +140,8 @@ class Server(object):
 
 
 def start(conf, args):
-    return Server(conf, args).start()
+    server = Server(conf, args)
+    server.start()
+    return server
 
 

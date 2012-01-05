@@ -60,5 +60,7 @@ class Client(object):
 
 
 def start(conf, args):
-    return Client(conf, args).start()
+    client = Client(conf, args)
+    client.start()
+    return client
 
