@@ -1,10 +1,24 @@
 #!/usr/bin/python
 
 import sys
+import os
+from os.path import realpath, dirname, join
 
-sys.path.append("/srv/project/fadelisk/lib/python")
+script = sys.argv[0]
+
+def add_path(path):
+    sys.path.insert(0, path)
+
+add_path("/srv/project/fadelisk/lib/python")            # add project path
+
+if script and script != '-':                            # if script not piped
+    def realjoin(*args):
+        return realpath(join(*args))
+    script_dir = realpath(dirname(script))
+    script_parent = realjoin(script_dir, '..')
+    add_path(realjoin(script_parent, 'lib', 'python'))  # ...add relative path 
+
 #sys.dont_write_bytecode = True
-
 import fadelisk
 
 fadelisk.begins()
