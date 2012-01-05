@@ -18,7 +18,7 @@ if script and script != '-':                            # if script not piped
     script_parent = realjoin(script_dir, '..')
     add_path(realjoin(script_parent, 'lib', 'python'))  # ...add relative path 
 
-#sys.dont_write_bytecode = True
+sys.dont_write_bytecode = True
 import fadelisk
 
 fadelisk.begins()
