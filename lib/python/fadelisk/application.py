@@ -24,6 +24,7 @@ class Application(object):
         '@PARENT@',             # Distribution?
     ]
     conf_file_name = 'fadelisk.yaml'
+    usage = 'usage: fadelisk [options] start | stop | client | command'
 
     # Options are later combined from the configuration file and command line
     # parameters. In addition, parameters that depend on other parameters
@@ -95,12 +96,30 @@ class Application(object):
                               )
         (self.options, self.args) = self.parser.parse_args()
 
+    def command_not_implemented(self, conf, args):
+        print('Command "%s" is not implemented yet.' % args[0])
+
+    def build_dispatch_table(self):
+        self.dispatch_table = {
+            'start':    server.start,
+            'stop':     client.start,
+            'client':   self.command_not_implemented,
+            'command':  self.command_not_implemented,
+        }
+
     def dispatch(self):
+        if not self.args:
+            print(Application.usage)
+            sys.exit(1)
         command = self.args[0]
-        if command == 'start':
-            server.start(self.conf, self.args)
-        elif command == 'stop':
-            client.start(self.conf, self.args)
-        else:
-            print("usage: fadelisk [options] start | stop | client | command")
+
+        self.build_dispatch_table()
+        execute = None
+        try:
+            execute = self.dispatch_table[command]
+        except KeyError:
+            print(Application.usage)
+            sys.exit(1)
+
+        execute(self.conf, self.args)
 
