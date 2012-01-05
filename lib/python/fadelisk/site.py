@@ -1,4 +1,3 @@
-#!/usr/bin/env python
 
 import os
 from twisted.web import resource, static, script
