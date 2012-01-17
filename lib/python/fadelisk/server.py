@@ -134,7 +134,7 @@ class Server(object):
         try:
             pid = os.fork()
         except OSError as e:
-            raise Exception, e.strerror
+            raise Exception(e.strerror)
         if pid:
             os._exit(0)
 

@@ -41,7 +41,7 @@ class ConfDynamicDict(ConfDict):
     def abort_if_dynamic(self):
         if self.ignore_changes:
             return
-        raise RuntimeError, 'Attempted to alter a dynamic configuration'
+        raise RuntimeError('Attempted to alter a dynamic configuration')
 
     def __setitem__(self, key, value):
         self.abort_if_dynamic()
@@ -199,7 +199,7 @@ class ConfStack(object):
             if key in conf:
                 return conf[key]
 
-        raise KeyError, '%s not in configuration stack' % key
+        raise KeyError('%s not in configuration stack' % key)
 
     def get(self, key, default=None):
         try:
@@ -217,5 +217,5 @@ def ConfHunterFactory(cls, filename, locations=None, ignore_changes=False):
         conf_file = os.path.join(location, filename)
         if os.access(conf_file, os.R_OK):            # readable?
             return cls(conf_file, ignore_changes=ignore_changes)
-    raise ConfNotFoundError, "Could not find %s" % filename
+    raise ConfNotFoundError("Could not find %s" % filename)
 
