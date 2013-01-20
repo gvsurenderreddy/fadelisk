@@ -60,6 +60,8 @@ class Server(object):
 
     def gather_sites(self):
         for collection in self.conf['site_collections']:
+            if not os.path.exists(collection):
+                continue
             for site_ in os.listdir(collection):
                 site_path = os.path.join(os.path.abspath(collection), site_)
                 site_etc_path = os.path.join(site_path, 'etc')
