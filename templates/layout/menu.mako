@@ -22,7 +22,11 @@
     </div>
 </%def>
 
-<%def name="menu_button(path, override={}, tooltip={})">
+<%def name="menu_button(path,
+    override={},
+    tooltip={},
+    highlight_current=False
+    )">
     <%
         if path in override:
             label = override[path]
@@ -31,8 +35,20 @@
         title = ''
         if path in tooltip:
             title = ' title="%s"' % tooltip[path]
+
+        current = False
+        if highlight_current:
+            if path == '/':
+                if request.uri == '/':
+                    current = True
+            else:
+                if request.uri.startswith(path):
+                    current = True
+        cls = ""
+        if current:
+            cls = 'class="current" '
     %>
-    <a href="${path}"${title}>${label}</a>
+    <a ${cls}href="${path}"${title}>${label}</a>
 </%def>
 
 <%def name="ul(
@@ -41,7 +57,8 @@
     tooltip={},
     indications=[],
     element_class=None,
-    element_id=None
+    element_id=None,
+    highlight_current=False
     )">
     <%
         # Add in classes and IDs
@@ -53,7 +70,7 @@
     %>
     <ul${class_id}>
         % for item in items:
-                 <li>${menu_button(item, override, tooltip)}</li>
+            <li>${menu_button(item, override, tooltip, highlight_current)}</li>
         % endfor
         % for indication in indications:
             <li><span>${indication}</span></li>
