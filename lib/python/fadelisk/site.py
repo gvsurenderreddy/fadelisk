@@ -41,13 +41,14 @@ class ProcessorHTML(resource.Resource):
 #        with open("/tmp/path.txt", "w") as f:
 #            data = f.write(path)
         if path.endswith('/'):
-            path = ''.join([path, 'index.html'])
+            path += 'index.html'
         template = self.site.template_lookup.get_template(path)
 
         request_data = {}
         content = template.render(
             request=request,
             request_data=request_data,
+            site_data=self.site.data,
             site=self.site,
             **self.site.template_context
         )
@@ -61,17 +62,18 @@ class ErrorResource(resource.Resource):
         resource.Resource.__init__(self)
         self.site = site
         self.path = path
+        if self.path.endswith('/'):
+            self.path += 'index.html'
 
     def render_GET(self, request):
         request.setHeader('server', self.site.application_conf['server'])
         request.setResponseCode(404)
 
-        if self.path.endswith('/'):
-            self.path = ''.join([self.path, 'index.html'])
         template = self.site.template_lookup.get_template(self.path)
         return template.render(
             request=request,
             request_data={},
+            site_data=self.site.data,
             site=self.site,
             **self.site.template_context
         )
@@ -82,6 +84,7 @@ class Site(object):
         self.path = path
         self.application_conf = application_conf
         self.conf = site_conf
+        self.data = {}
 
         self.error_resource = ErrorResource(self, '/errors/404_not_found.html')
         #self.error_resource.processors = {'.html': self.factory_processor_html}
