@@ -147,12 +147,13 @@
     <%
         html_out = []
         name = element['name']
+        _type = element.get('element_type', 'input_text')[6:]
 
         if 'label' in element:
             html_out.extend(label(element))
         # *BEFORE
         html_out.append('<input')
-        html_out.append(' type="%s"' % element.get('input_type', 'text'))
+        html_out.append(' type="%s"' % _type)
         value = get_value(
             name,
             value=values.get(name, ''),
@@ -188,7 +189,7 @@
         if value:
             html_out.append(' value="%s"' % value)
         html_out.append(' />')
-        html_out.append('<br />')
+        html_out.append('')
     %>
     ${''.join(html_out)}
 </%def>
