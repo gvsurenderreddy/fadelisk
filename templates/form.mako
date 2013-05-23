@@ -2,7 +2,7 @@
     FORMULA: A library of functions to build forms from a data structure.
 </%doc>
 
-<%def name="form(fields=[], values={}, form_info={})">
+<%def name="form(fields, values={}, form_info={})">
     <%
         if form_info.get('skip_form_wrap'):
             unwrapped_form(fields=fields, values=values, form_info=form_info)
@@ -11,20 +11,20 @@
     %>
 </%def>
 
-<%def name="wrapped_form(fields=[], values={}, form_info={})">
+<%def name="wrapped_form(fields, values={}, form_info={})">
     <%
         action = form_info.get("action", "")
         method = form_info.get("method", "post")
-        cls = form_info.get("class", None)
-        if cls:
-            cls = ' class="%s"' % cls
+        class_ = form_info.get("class", "")
+        if class_:
+            class_ = ' class="%s"' % cls
     %>
-    <form ${cls}action="${action}" method="${method}">
+    <form ${class_}action="${action}" method="${method}">
         ${unwrapped_form(fields=fields, values=values, form_info=form_info)}
     </form>
 </%def>
 
-<%def name="unwrapped_form(fields=[], values={}, form_info={})">
+<%def name="unwrapped_form(fields, values={}, form_info={})">
     <%
         for item in fields:
             if isinstance(item, list):
@@ -43,7 +43,7 @@
         submit_label=form_info.get("submit_label", "Save")
     %>
     <div class="form-buttonbar">
-    <input class="submit" type="submit" value="${submit_label}" />
+        <input class="submit" type="submit" value="${submit_label}" />
     </div>
 </%def>
 
@@ -61,6 +61,7 @@
         for item in fields:
             if isinstance(item, list):
                 legend = item[0]
+                break
     %>
     <fieldset>
         % if legend:
@@ -147,13 +148,13 @@
     <%
         html_out = []
         name = element['name']
-        _type = element.get('element_type', 'input_text')[6:]
+        type_ = element.get('element_type', 'input_text')[6:]
 
         if 'label' in element:
             html_out.extend(label(element))
         # *BEFORE
         html_out.append('<input')
-        html_out.append(' type="%s"' % _type)
+        html_out.append(' type="%s"' % type_)
         value = get_value(
             name,
             value=values.get(name, ''),
@@ -165,7 +166,7 @@
         for attr in 'name size maxlength style'.split():
             if attr in element:
                 html_out.append(' %s="%s"' % (attr, element[attr]))
-        # *CLASS: join in 'input-hilight'
+        # *CLASS: join in 'input-highlight'
         html_out.append(' />')
         # *AFTER
         # *REQUIRED
