@@ -1,17 +1,69 @@
 
 import os
-from twisted.web import resource, static, script
+from twisted.web import resource, static
 from mako.lookup import TemplateLookup
-from mako import exceptions
+
+class Site(object):
+    def __init__(self, path, application_conf, site_conf):
+        self.path = path
+        self.application_conf = application_conf
+        self.conf = site_conf
+        self.data = {}
+
+        self.error_resource = ErrorResource(self, '/errors/404_not_found.html')
+        #self.error_resource.processors = {'.html': self.factory_processor_html}
+        #self.error_resource.childNotFound = resource.NoResource("NO RESOURCE")
+
+        self.resource = static.File(self.rel_path('content'))
+        #self.resource = SneakyStatic(self.rel_path('content'))
+        self.resource.indexNames=['index.html', 'index.htm']
+        self.resource.processors = {'.html': self.factory_processor_html}
+        self.resource.childNotFound = self.error_resource
+
+        # "Lift" some subdirectories above content dir to keep them separate
+        for directory in self.conf.get('top_level_directories', []):
+            self.resource.putChild(
+                directory,
+                static.File(self.rel_path(directory))
+            )
+
+        self.template_context = {
+            #'vhost_path': self.path,
+            'cache': {
+                'conf': {},
+                'file': {},
+                'data': {},
+            },
+        }
+        template_lookup_directories = [
+            self.rel_path('content'),
+            self.rel_path('templates'),
+            self.rel_path('template'),
+        ]
+        template_lookup_directories.extend(
+            self.application_conf.get('template_directories', [])
+        )
+        self.template_lookup = TemplateLookup(
+            directories = template_lookup_directories,
+            module_directory = self.rel_path('tmp/mako-module'),
+            input_encoding='utf-8',
+            output_encoding='utf-8',
+            filesystem_checks = True,
+        )
+
+    def rel_path(self, path=None):
+        if path:
+            return os.path.join(self.path, path)
+        return self.path
+
+    def factory_processor_html(self, request_path, registry):
+        return ProcessorHTML(request_path, registry, self)
 
 class SneakyStatic(static.File):
     def __init__(self, path, defaultType="text/html", ignoredExts=(),
                  registry=None, allowExt=0):
         static.File.__init__(self, path, defaultType, ignoredExts,
                              registry, allowExt)
-
-#    def getChild(self, path, request):
-#        raise OSError
 
 class ProcessorHTML(resource.Resource):
     isLeaf = True
@@ -78,64 +130,4 @@ class ErrorResource(resource.Resource):
             **self.site.template_context
         )
 
-
-class Site(object):
-    def __init__(self, path, application_conf, site_conf):
-        self.path = path
-        self.application_conf = application_conf
-        self.conf = site_conf
-        self.data = {}
-
-        self.error_resource = ErrorResource(self, '/errors/404_not_found.html')
-        #self.error_resource.processors = {'.html': self.factory_processor_html}
-        #self.error_resource.childNotFound = resource.NoResource("NO RESOURCE")
-
-        #self.resource = static.File(self.rel_path('content'))
-        self.resource = SneakyStatic(self.rel_path('content'))
-        self.resource.indexNames=['index.html', 'index.rpy']
-        self.resource.processors = {
-            '.html': self.factory_processor_html,
-            '.rpy': script.ResourceScript
-        }
-        self.resource.childNotFound = self.error_resource
-
-        # "Lift" some subdirectories above content dir to keep them separate
-        for directory in self.conf.get('top_level_directories', []):
-            self.resource.putChild(
-                directory,
-                static.File(self.rel_path(directory))
-            )
-
-        self.template_context = {
-            'vhost_path': self.path,
-            'environ': os.environ,
-            'cache': {
-                'conf': {},
-                'file': {},
-                'data': {},
-            },
-        }
-        template_lookup_directories = [
-            self.rel_path('content'),
-            self.rel_path('templates'),
-            self.rel_path('template'),
-        ]
-        template_lookup_directories.extend(
-            self.application_conf.get('template_directories', [])
-        )
-        self.template_lookup = TemplateLookup(
-            directories = template_lookup_directories,
-            module_directory = self.rel_path('tmp/mako-module'),
-            input_encoding='utf-8',
-            output_encoding='utf-8',
-            filesystem_checks = True,
-        )
-
-    def rel_path(self, path=None):
-        if path:
-            return os.path.join(self.path, path)
-        return self.path
-
-    def factory_processor_html(self, request_path, registry):
-        return ProcessorHTML(request_path, registry, self)
 
