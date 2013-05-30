@@ -10,8 +10,7 @@
         cache['data']['page_title'] = {}
 
     if 'page_title' not in cache['conf']:       # Try to cache conf
-        page_title_file_name = os.path.join(
-            context['vhost_path'], 'etc', 'page_title.yaml')
+        page_title_file_name = os.path.join(site.path, 'etc', 'page_title.yaml')
         try:
             cache['conf']['page_title'] = fadelisk.conf.ConfYAML(
                 page_title_file_name)
