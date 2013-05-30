@@ -30,6 +30,7 @@ class Site(object):
         self.template_context = {
             #'vhost_path': self.path,
             'cache': {
+                'db': {},
                 'conf': {},
                 'file': {},
                 'data': {},
