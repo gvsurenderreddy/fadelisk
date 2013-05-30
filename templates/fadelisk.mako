@@ -14,8 +14,13 @@
         #   templates which lay out input elements.
         'unique_field_id': 0,
 
-        #-- Create a place for flags concerning rendering behavior.
-        'flag': {}
+        #-- Flags: Entries in this dictionary can be used to arbitrarily
+        #   alter rendering behavior in site templates.
+        'flag': {},
+
+        #-- Debug messages: Strings added to this list may be formatted
+        #   later to ask as informational output during development.
+        'debug': [],
     })
 
     try:
