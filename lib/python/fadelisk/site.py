@@ -2,6 +2,7 @@
 import os
 from twisted.web import resource, static
 from mako.lookup import TemplateLookup
+from mako import exceptions
 
 class Site(object):
     def __init__(self, path, application_conf, site_conf):
@@ -69,6 +70,23 @@ class SneakyStatic(static.File):
 class ProcessorHTML(resource.Resource):
     isLeaf = True
     allowedMethods = ('GET', 'POST', 'HEAD')
+    internal_server_error = """
+    <!doctype html>
+    <html lang="en">
+        <head>
+            <meta charset="utf-8">
+            <link rel="icon" href="/images/favicon.png" type="image/png">
+            <title>Internal Server Error</title>
+        </head>
+        <body>
+            <h1>Internal Server Error</h1>
+            <p>
+                The web server has encountered an internal server error and is 
+                unable to fulfill your request
+            </p>
+        </body>
+    </html>
+    """
 
     def __init__(self, path, registry, site):
         resource.Resource.__init__(self)
@@ -98,14 +116,21 @@ class ProcessorHTML(resource.Resource):
         template = self.site.template_lookup.get_template(path)
 
         request_data = {}
-        content = template.render(
-            request=request,
-            request_data=request_data,
-            site_data=self.site.data,
-            site=self.site,
-            **self.site.template_context
-        )
-        return request_data.get('payload', None) or content
+        try:
+            content = template.render(
+                request=request,
+                request_data=request_data,
+                site_data=self.site.data,
+                site=self.site,
+                **self.site.template_context
+            )
+            return request_data.get('payload', None) or content
+        except:
+            request.setResponseCode(500)
+            if self.site.conf.get('debug'):
+                return exceptions.html_error_template().render()
+            else:
+                return ProcessorHTML.internal_server_error
 
 
 class ErrorResource(resource.Resource):

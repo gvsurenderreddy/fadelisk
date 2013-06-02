@@ -27,7 +27,7 @@
         content = capture(next.body)
     except Exception as exc:
         # In debug mode, let twisted-web show its own traceback...
-        if site.conf.get('debug', False):
+        if site.conf.get('debug'):
             raise
         # ...otherwise replace with a more-polite, less-informative message.
         last_resort_layout()
