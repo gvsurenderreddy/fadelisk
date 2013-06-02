@@ -113,10 +113,10 @@ class ProcessorHTML(resource.Resource):
 #            data = f.write(path)
         if path.endswith('/'):
             path += 'index.html'
-        template = self.site.template_lookup.get_template(path)
 
         request_data = {}
         try:
+            template = self.site.template_lookup.get_template(path)
             content = template.render(
                 request=request,
                 request_data=request_data,
