@@ -2,16 +2,16 @@
     FORMULA: A library of functions to build forms from a data structure.
 </%doc>
 
-<%def name="form(fields, values={}, form_info={})">
+<%def name="form(fields, form_info={})">
     <%
         if form_info.get('skip_form_wrap'):
-            unwrapped_form(fields=fields, values=values, form_info=form_info)
+            unwrapped_form(fields=fields, form_info=form_info)
         else:
-            wrapped_form(fields=fields, values=values, form_info=form_info)
+            wrapped_form(fields=fields, form_info=form_info)
     %>
 </%def>
 
-<%def name="wrapped_form(fields, values={}, form_info={})">
+<%def name="wrapped_form(fields, form_info={})">
     <%
         action = form_info.get("action", "")
         method = form_info.get("method", "post")
@@ -20,17 +20,17 @@
             class_ = ' class="%s"' % cls
     %>
     <form ${class_}action="${action}" method="${method}">
-        ${unwrapped_form(fields=fields, values=values, form_info=form_info)}
+        ${unwrapped_form(fields=fields, form_info=form_info)}
     </form>
 </%def>
 
-<%def name="unwrapped_form(fields, values={}, form_info={})">
+<%def name="unwrapped_form(fields, form_info={})">
     <%
         for item in fields:
             if isinstance(item, list):
-                fieldset(item, values=values)
+                fieldset(item)
             elif isinstance(item, dict):
-                dispatch_element(item, values=values)
+                dispatch_element(item)
             elif isinstance(item, str):
                 explanatory(item)
         if not form_info.get('skip_buttonbar'):
@@ -38,21 +38,21 @@
     %>
 </%def>
 
-<%def name="dispatch_element(element, values={})">
+<%def name="dispatch_element(element)">
     <%
         element_type = element.get('element_type', 'input_text')
         element.setdefault('id', 'unique-field-%s' % get_unique_field_id())
 
         if element_type == 'input_text' or element_type == 'input_password':
-            input_text(element, values=values)
+            input_text(element)
         elif element_type == 'input_hidden':
-            input_hidden(element, values=values)
+            input_hidden(element)
         elif element_type == 'textarea':
-            textarea(element, values=values)
+            textarea(element)
         elif element_type == 'checkbox':
-            input_checkbox(element, values=values)
+            input_checkbox(element)
         elif element_type == 'radio':
-            radio(element, values=values)
+            radio(element)
     %>
 </%def>
 
@@ -79,7 +79,7 @@
     %>
 </%def>
 
-<%def name="fieldset(fields, values={})">
+<%def name="fieldset(fields)">
     <%
         # Find legend
         legend = None
@@ -94,7 +94,7 @@
         % endif
         % for item in fields:
             % if isinstance(item, dict):
-                ${dispatch_element(item, values=values)}
+                ${dispatch_element(item)}
             % elif isinstance(item, str):
                 ${explanatory(item)}
             % endif
@@ -112,11 +112,13 @@
     <label for="${element_id}">${label}</label>
 </%def>
 
-<%def name="input_checkbox(element, values={})">
+<%def name="input_checkbox(element)">
     <%
         name = element['name']
-        offset = element.get('offset', 0)
-        value = get_value(name, value=values.get(name), offset=offset)
+        try:
+            value = get_value(element)
+        except KeyError:
+            value = ''
 
         attribs = {'name': name, 'type': 'checkbox'}
         if value:
@@ -127,13 +129,15 @@
     %>
 </%def>
 
-<%def name="radio(element, values={})">
+<%def name="radio(element)">
     <%
         out = ''
         name = element['name']
         labels = dict(zip(element['values'], element['labels']))
-        offset = element.get('offset', 0)
-        value = get_value(name, value=values.get(name), offset=offset)
+        try:
+            value = get_value(element)
+        except KeyError:
+            value = ''
 
         for val in element['values']:
             attribs = {'name': name, 'type': 'radio', 'value': val}
@@ -146,18 +150,17 @@
     %>
 </%def>
 
-<%def name="input_text(element, values={})">
+<%def name="input_text(element)">
     <%
         out = ''
 
         name = element['name']
         type_ = element.get('element_type', 'input_text')[6:]
         label = element.get('label')
-        value = get_value(
-            name,
-            value=values.get(name, ''),
-            offset=element.get('offset', 0),
-        )
+        try:
+            value = get_value(element)
+        except KeyError:
+            value = ''
 
         attribs = {
             'name': name,
@@ -186,14 +189,13 @@
     %>
 </%def>
 
-<%def name="input_hidden(element, values={})">
+<%def name="input_hidden(element)">
     <%
         name = element['name']
-        value = get_value(
-            name,
-            value=values.get(name, ''),
-            offset=element.get('offset', 0),
-        )
+        try:
+            value = get_value(element)
+        except KeyError:
+            value = ''
 
         attribs = {'name': name, 'type': 'hidden'}
         if value:
@@ -203,15 +205,14 @@
     %>
 </%def>
 
-<%def name="textarea(element, values={})">
+<%def name="textarea(element)">
     <%
         name = element['name']
         label = element.get('label')
-        value = get_value(
-            name,
-            value=values.get(name, ''),
-            offset=element.get('offset', 0),
-        )
+        try:
+            value = get_value(element)
+        except KeyError:
+            value = ''
 
         attribs = {
             'name': name,
@@ -227,15 +228,39 @@
     %>
 </%def>
 
-<%def name="get_value(name, value='', attribute=False, offset=0)">
+<%def name="get_value(field)">
 <%
-    if name in request.args:
-        value = request.args[name][offset]
+    if isinstance(field, dict):
+        try:
+            return field['value']
+        except KeyError:
+            return request.args[field['name']]
 
-    if attribute:
-        return 'value="%s"' % value             # For form markup.
-    return value                                # For general use.
+    if isinstance(field, str):
+        return request.args[field]
+
+    raise TypeError('field must be dict or str type')
 %>
 </%def>
 
+<%def name="find_field(fields)">
+    <%
+        for item in fields:
+            if isinstance(item, dict):
+                return item
+            elif isinstance(item, list):
+                for fieldset_item in item:
+                    if isinstance(fieldset_item, dict):
+                        return fieldset_item
+        return None
+    %>
+</%def>
+
+<%def name="form_is_first_round(fields)">
+    <%
+        if find_field(fields)['name'] in request.args:
+            return False
+        return True
+    %>
+</%def>
 ## vim:ft=mako
