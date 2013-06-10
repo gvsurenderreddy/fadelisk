@@ -116,7 +116,7 @@
     <%
         name = element['name']
         try:
-            value = get_value(element)
+            value = get_value(element)[0]
         except KeyError:
             value = ''
 
@@ -135,7 +135,7 @@
         name = element['name']
         labels = dict(zip(element['values'], element['labels']))
         try:
-            value = get_value(element)
+            value = get_value(element)[0]
         except KeyError:
             value = ''
 
@@ -158,7 +158,7 @@
         type_ = element.get('element_type', 'input_text')[6:]
         label = element.get('label')
         try:
-            value = get_value(element)
+            value = get_value(element)[0]
         except KeyError:
             value = ''
 
@@ -193,7 +193,7 @@
     <%
         name = element['name']
         try:
-            value = get_value(element)
+            value = get_value(element)[0]
         except KeyError:
             value = ''
 
@@ -210,7 +210,7 @@
         name = element['name']
         label = element.get('label')
         try:
-            value = get_value(element)
+            value = get_value(element)[0]
         except KeyError:
             value = ''
 
