@@ -40,19 +40,22 @@
 
 <%def name="dispatch_element(element)">
     <%
-        element_type = element.get('element_type', 'input_text')
         element.setdefault('id', 'unique-field-%s' % get_unique_field_id())
 
-        if element_type == 'input_text' or element_type == 'input_password':
-            input_text(element)
-        elif element_type == 'input_hidden':
-            input_hidden(element)
-        elif element_type == 'textarea':
-            textarea(element)
-        elif element_type == 'checkbox':
-            input_checkbox(element)
-        elif element_type == 'radio':
-            radio(element)
+        handlers = {
+            'text': input_text,
+            'password': input_text,
+            'textarea': textarea,
+            'checkbox': checkbox,
+            'radio': radio,
+            'preserve': preserve,
+        }
+        type_ = element.get('type', 'text')
+        try:
+            handler = handlers[type_]
+        except KeyError:
+            return
+        handler(element)
     %>
 </%def>
 
@@ -92,27 +95,18 @@
         % if legend:
             <legend>${legend}</legend>
         % endif
-        % for item in fields:
-            % if isinstance(item, dict):
-                ${dispatch_element(item)}
-            % elif isinstance(item, str):
-                ${explanatory(item)}
-            % endif
-        % endfor
+        <%
+            for item in fields:
+                if isinstance(item, dict):
+                    dispatch_element(item)
+                elif isinstance(item, str):
+                    explanatory(item)
+        %>
     </fieldset>
 
 </%def>
 
-<%def name="label(element)">
-    <%
-        if not 'id' in element:
-            return
-        element_id, label = element['id'], element['label']
-    %>
-    <label for="${element_id}">${label}</label>
-</%def>
-
-<%def name="input_checkbox(element)">
+<%def name="checkbox(element)">
     <%
         name = element['name']
         try:
@@ -155,12 +149,8 @@
         out = ''
 
         name = element['name']
-        type_ = element.get('element_type', 'input_text')[6:]
+        type_ = element.get('type', 'text')
         label = element.get('label')
-        try:
-            value = get_value(element)[0]
-        except KeyError:
-            value = ''
 
         attribs = {
             'name': name,
@@ -168,6 +158,10 @@
             'size': element.get('size', 32),
             'maxlength': element.get('maxlength', 64),
         }
+        try:
+            attribs['value'] = get_value(element)[0]
+        except KeyError:
+            pass
         out = build_attribs(attribs, 'input')
         if label:
             out = '<label>%s%s</label>' % (label, out)
@@ -186,6 +180,15 @@
         if tag:
             items.append('/>')
         return ' '.join(items)
+    %>
+</%def>
+
+<%def name="preserve(element)">
+    <%
+        name = element['name']
+        if name in request.args:
+            input_hidden(element)
+        return
     %>
 </%def>
 
