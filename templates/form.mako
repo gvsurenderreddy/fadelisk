@@ -13,13 +13,15 @@
 
 <%def name="wrapped_form(fields, form_info={})">
     <%
-        action = form_info.get("action", "")
-        method = form_info.get("method", "post")
+        attribs = {
+            'action': form_info.get("action", ""),
+            'method': form_info.get("method", "post"),
+        }
         class_ = form_info.get("class", "")
         if class_:
-            class_ = ' class="%s"' % cls
+            attribs['class'] = class_
     %>
-    <form ${class_}action="${action}" method="${method}">
+    <form ${build_attribs(attribs)}>
         ${unwrapped_form(fields=fields, form_info=form_info)}
     </form>
 </%def>
@@ -151,6 +153,7 @@
         name = element['name']
         type_ = element.get('type', 'text')
         label = element.get('label')
+        class_ = element.get('class', '').split()
 
         attribs = {
             'name': name,
@@ -158,14 +161,32 @@
             'size': element.get('size', 32),
             'maxlength': element.get('maxlength', 64),
         }
+
+        if 'required' in element:
+            class_.append('required')
+            attribs['required'] = 'required'
+
         try:
-            attribs['value'] = get_value(element)[0]
+            values = get_value(element)
         except KeyError:
-            pass
-        out = build_attribs(attribs, 'input')
-        if label:
-            out = '<label>%s%s</label>' % (label, out)
-        context.write(out)
+            values = ['']
+
+        if class_:
+            attribs['class'] = ' '.join(class_)
+
+        first = True
+        for value in values:
+            this_attribs = attribs.copy()
+            if value is not None:
+                value = str(value)
+                if len(value):
+                    attribs['value'] = value
+
+            out = build_attribs(attribs, 'input')
+            if first and label:
+                out = '<label>%s%s</label>' % (label, out)
+                first = False
+            context.write(out)
         return
     %>
 </%def>
@@ -184,9 +205,23 @@
 </%def>
 
 <%def name="preserve(element)">
+    <%doc>
+        Preservation elements are used in cases where the presence of
+        a field is optional. If a value for a preservation field is
+        found in request.args, a hidden element will be placed into
+        the form. This field will be recirculated continually through
+        subsequent form submittals. This value may, of course, be
+        altered in request.args at any time to change the value of
+        the element. The value may even be removed from request.args,
+        resulting in the removal of the hidden element.
+
+        This may be used for various techniques, from extra parameters
+        tucked into forms during initial generation, to step-wise
+        forms that squirrel values away for a final submittal, and
+        more.
+    </%doc>
     <%
-        name = element['name']
-        if name in request.args:
+        if element['name'] in request.args:
             input_hidden(element)
         return
     %>
@@ -196,14 +231,14 @@
     <%
         name = element['name']
         try:
-            value = get_value(element)[0]
+            values = get_value(element)
         except KeyError:
-            value = ''
+            values = ['']
 
         attribs = {'name': name, 'type': 'hidden'}
-        if value:
+        for value in values:
             attribs['value'] = value
-        context.write(build_attribs(attribs, 'input'))
+            context.write(build_attribs(attribs, 'input'))
         return
     %>
 </%def>
@@ -248,22 +283,45 @@
 
 <%def name="find_field(fields)">
     <%
+        return get_all_fields(fields)[0]
+    %>
+</%def>
+
+<%def name="get_all_fields(fields)">
+    <%
+        all_fields = []
         for item in fields:
             if isinstance(item, dict):
-                return item
+                all_fields.append(item)
             elif isinstance(item, list):
-                for fieldset_item in item:
-                    if isinstance(fieldset_item, dict):
-                        return fieldset_item
-        return None
+                all_fields.extend(get_all_fields(item))
+        return all_fields
+    %>
+</%def>
+
+<%def name="field_is_not_preserve(field)">
+    <%
+        return field.get('type', text) != 'preserve'
+    %>
+</%def>
+
+<%def name="arg_is_present(field)">
+    <%
+        if isinstance(field, dict):
+            name = field['name']
+            return name in request.args
+
+        if isinstance(field, str):
+            return field in request.args
+
+        raise TypeError('field must be dict or str type')
     %>
 </%def>
 
 <%def name="form_is_first_round(fields)">
     <%
-        if find_field(fields)['name'] in request.args:
-            return False
-        return True
+        return not arg_is_present(find_field(fields))
     %>
 </%def>
+
 ## vim:ft=mako
