@@ -44,8 +44,6 @@
 
 <%def name="dispatch_field(field, error={})">
     <%
-        #field.setdefault('id', 'unique-field-%s' % get_unique_field_id())
-
         handlers = {
             'text': input_text,
             'password': input_text,
@@ -66,8 +64,12 @@
 <%def name="buttonbar(form_info={})">
     <%
         submit_label=form_info.get("submit_label", "Save")
+        cancel = form_info.get('cancel')
     %>
     <div class="form-buttonbar">
+        % if cancel:
+            <a class="button-danger" href="${cancel}">Cancel</a>
+        % endif
         <input class="submit" type="submit" value="${submit_label}" />
     </div>
 </%def>
@@ -136,7 +138,6 @@
             if not index and label:
                 out = '<label>%s%s</label>' % (label, out)
             context.write(out)
-        return
     %>
 </%def>
 
@@ -159,7 +160,6 @@
         if label:
             out = '<label>%s%s</label>' % (label, out)
         context.write(out)
-        return
     %>
 </%def>
 
@@ -180,7 +180,6 @@
                 this_attribs['checked'] = 'checked'
             out = build_attribs(this_attribs, 'input')
             context.write('<label>%s%s</label>' % (out, field['label']))
-        return
     %>
 </%def>
 
@@ -206,7 +205,21 @@
         if label:
             out = '<div class="label">%s%s</div>' % (label, out)
         context.write(out)
-        return
+    %>
+</%def>
+
+<%def name="input_hidden(field, error={})">
+    <%
+        name = field['name']
+        try:
+            values = get_values(field)
+        except KeyError:
+            values = ['']
+
+        attribs = {'name': name, 'type': 'hidden'}
+        for value in values:
+            attribs['value'] = value
+            context.write(build_attribs(attribs, 'input'))
     %>
 </%def>
 
@@ -231,9 +244,8 @@
         more.
     </%doc>
     <%
-        if field['name'] in request.args:
+        if arg_is_present(field):
             input_hidden(field)
-        return
     %>
 </%def>
 
@@ -269,22 +281,6 @@
         if tag:
             items.append('/>')
         return ' '.join(items)
-    %>
-</%def>
-
-<%def name="input_hidden(field, error={})">
-    <%
-        name = field['name']
-        try:
-            values = get_values(field)
-        except KeyError:
-            values = ['']
-
-        attribs = {'name': name, 'type': 'hidden'}
-        for value in values:
-            attribs['value'] = value
-            context.write(build_attribs(attribs, 'input'))
-        return
     %>
 </%def>
 
@@ -341,13 +337,8 @@
 <%def name="arg_is_present(field)">
     <%
         if isinstance(field, dict):
-            name = field['name']
-            return name in request.args
-
-        if isinstance(field, str):
-            return field in request.args
-
-        raise TypeError('field must be dict or str type')
+            field = field['name']
+        return field in request.args
     %>
 </%def>
 
