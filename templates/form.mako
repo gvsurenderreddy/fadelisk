@@ -2,6 +2,10 @@
     FORMULA: A library of functions to build forms from a data structure.
 </%doc>
 
+<%!
+    from xml.sax.saxutils import quoteattr
+%>
+
 ##:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::( form )
 
 <%def name="form(fields, form_info={}, error={})">
@@ -50,6 +54,7 @@
             'textarea': textarea,
             'checkbox': checkbox,
             'radio': radio,
+            'select': select,
             'preserve': preserve,
         }
         type_ = field.get('type', 'text')
@@ -208,6 +213,32 @@
     %>
 </%def>
 
+<%def name="select(field, error={})">
+    <%
+        name = field['name']
+        label = field.get('label')
+        choices = field['choices']
+        descriptions = dict(zip(choices, field['descriptions']))
+        try:
+            value = get_values(field)[0]
+        except:
+            value = ''
+        attribs = {'name': name}
+
+        out = '<select>'
+        for choice in choices:
+            this_attribs = {'value': choice}
+            if choice == value:
+                this_attribs['selected'] = 'selected'
+            out += '<option ' + build_attribs(this_attribs) 
+            out += '>' + descriptions[choice] + '</option>'
+        out += '</select>'
+        if label:
+            out = '<label>%s%s</label>' % (label, out)
+        context.write(out)
+    %>
+</%def>
+
 <%def name="input_hidden(field, error={})">
     <%
         name = field['name']
@@ -277,7 +308,7 @@
         if tag:
             items.append('<' + tag)
         for attrib, value in attribs.iteritems():
-            items.append('%s="%s"' % (attrib, value))
+            items.append('%s=%s' % (attrib, quoteattr(str(value))))
         if tag:
             items.append('/>')
         return ' '.join(items)
