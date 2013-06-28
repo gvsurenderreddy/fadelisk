@@ -223,14 +223,13 @@
             value = get_values(field)[0]
         except:
             value = ''
-        attribs = {'name': name}
 
-        out = '<select>'
+        out = '<select name="%s">' % name
         for choice in choices:
-            this_attribs = {'value': choice}
+            attribs = {'value': choice}
             if choice == value:
-                this_attribs['selected'] = 'selected'
-            out += '<option ' + build_attribs(this_attribs) 
+                attribs['selected'] = 'selected'
+            out += '<option ' + build_attribs(attribs)
             out += '>' + descriptions[choice] + '</option>'
         out += '</select>'
         if label:
