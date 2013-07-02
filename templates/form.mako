@@ -162,7 +162,7 @@
             'name': name,
             'rows': field.get('rows', 10),
             'cols': field.get('cols', 40),
-            'maxlength': field.get('maxlength', 1024),
+            'maxlength': field.get('maxlength', 4096),
         }
         for index in range(len(values)):
             this_class = list(class_) # copy
@@ -240,23 +240,33 @@
     <%
         name = field['name']
         label = field.get('label')
-        choices = field['choices']
-        descriptions = dict(zip(choices, field['descriptions']))
+        class_ = field.get('class', '').split()
+        choices = dict(zip(field['choices'], field['descriptions']))
+        attribs = {'name': name}
         try:
-            value = get_values(field)[0]
+            values = get_values(field)
         except:
-            value = ''
+            values = ['']
 
-        out = '<select name="%s">' % name
-        for choice in choices:
-            attribs = {'value': choice}
-            if choice == value:
-                attribs['selected'] = 'selected'
-            out += wrap_tags('option', attribs, descriptions[choice])
-        out += '</select>'
-        if label:
-            out = '<label>%s%s</label>' % (label, out)
-        context.write(out)
+        for index in range(len(values)):
+            this_class = list(class_) # copy
+            this_attribs = attribs.copy()
+            value = values[index]
+            id_ = None
+
+            if label and not index:
+                id_ = '%s-%s' % (name, get_unique_field_id())
+                context.write(wrap_tags('label', label, {'for': id_}))
+                this_attribs['id'] = id_
+            if value is not None:
+                value = str(value)
+            out = ''
+            for choice, description in choices.iteritems():
+                choice_attribs = {'value': choice}
+                if choice == value:
+                    choice_attribs['selected'] = 'selected'
+                out += wrap_tags('option', description, choice_attribs)
+            context.write(wrap_tags('select', out, this_attribs))
     %>
 </%def>
 
