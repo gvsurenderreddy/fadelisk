@@ -125,17 +125,15 @@
         for index in range(len(values)):
             this_class = list(class_) # copy
             this_attribs = attribs.copy()
-            value = values[index]
+            value = str(values[index])
             id_ = None
 
             if label and not index:
                 id_ = '%s-%s' % (name, get_unique_field_id())
                 context.write(wrap_tags('label', label, {'for': id_}))
                 this_attribs['id'] = id_
-            if value is not None:
-                value = str(value)
-                if len(value):
-                    this_attribs['value'] = value
+            if len(value):
+                this_attribs['value'] = value
             if is_error(field, index, error):
                 this_class.append('error')
             if is_required(field, index):
@@ -151,7 +149,7 @@
 <%def name="textarea(field, error={})">
     <%
         name = field['name']
-        label = field.get('label')
+        lbl = field.get('label')
         class_ = field.get('class', '').split()
         try:
             values = get_values(field)
@@ -167,15 +165,13 @@
         for index in range(len(values)):
             this_class = list(class_) # copy
             this_attribs = attribs.copy()
-            value = values[index]
+            value = str(values[index])
             id_ = None
 
-            if label and not index:
+            if lbl and not index:
                 id_ = '%s-%s' % (name, get_unique_field_id())
-                context.write(wrap_tags('label', label, {'for': id_}))
+                label(lbl, id_)
                 this_attribs['id'] = id_
-            if value is not None:
-                value = str(value)
             out = wrap_tags('textarea', value, this_attribs)
             context.write(out)
     %>
@@ -193,24 +189,22 @@
 
         for index in range(len(values)):
             this_attribs = attribs.copy()
-            value = values[index]
+            value = str(values[index])
             id_ = '%s-%s' % (name, get_unique_field_id())
             this_attribs['id'] = id_
             if value:
                 this_attribs['checked'] = 'checked'
-            ckbox = build_tag(this_attribs, 'input', void=True)
-            lbl = wrap_tags('label', field['label'], {'for': id_})
-            context.write(wrap_tags('div', ckbox + lbl,
-                        {'class': 'checkbox'}))
+            ckbox = capture(input_, this_attribs)
+            lbl = capture(label, field['label'], id_)
+            context.write(wrap_tags('div', ckbox + lbl, {'class': 'checkbox'}))
     %>
 </%def>
 
 <%def name="radio(field, error)">
     <%
         name = field['name']
-        choices = field['choices']
-        label = field.get('label')
-        descriptions = dict(zip(choices, field['descriptions']))
+        lbl = field.get('label')
+        desc = dict(zip(field['choices'], field['descriptions']))
         try:
             value = get_values(field)[0]
         except:
@@ -218,9 +212,9 @@
         attribs = {'name': name, 'type': 'radio'}
 
         out = ''
-        if label:
-            out += wrap_tags('label', label)
-        for choice in choices:
+        if lbl:
+            out += label(lbl)
+        for choice in field['choices']:
             id_ = '%s-%s' % (name, get_unique_field_id())
             this_attribs = attribs.copy()
             this_attribs['value'] = choice
@@ -229,19 +223,32 @@
                 this_attribs['checked'] = 'checked'
             out += wrap_tags(
                 'div',
-                (build_tag(this_attribs, 'input', void=True) +
-                    wrap_tags('label', descriptions[choice], {'for': id_})),
+                (capture(input_, this_attribs) +
+                    capture(label, desc[choice], id_)),
                 {'class': 'radio'})
         context.write(out)
     %>
 </%def>
 
+<%def name="label(content, for_id=None)">
+    <%
+        attribs = {}
+        if for_id:
+            attribs['for'] = for_id
+    %>
+    ${wrap_tags('label', content, attribs)}
+</%def>
+
+<%def name="input_(attribs)">
+    ${build_tag(attribs, 'input', void=True)}
+</%def>
+
 <%def name="select(field, error={})">
     <%
         name = field['name']
-        label = field.get('label')
+        lbl = field.get('label')
         class_ = field.get('class', '').split()
-        choices = dict(zip(field['choices'], field['descriptions']))
+        desc = dict(zip(field['choices'], field['descriptions']))
         attribs = {'name': name}
         try:
             values = get_values(field)
@@ -251,21 +258,19 @@
         for index in range(len(values)):
             this_class = list(class_) # copy
             this_attribs = attribs.copy()
-            value = values[index]
+            value = str(values[index])
             id_ = None
 
-            if label and not index:
+            if lbl and not index:
                 id_ = '%s-%s' % (name, get_unique_field_id())
-                context.write(wrap_tags('label', label, {'for': id_}))
+                context.write(label(lbl, id_))
                 this_attribs['id'] = id_
-            if value is not None:
-                value = str(value)
             out = ''
-            for choice, description in choices.iteritems():
+            for choice in field['choices']:
                 choice_attribs = {'value': choice}
                 if choice == value:
                     choice_attribs['selected'] = 'selected'
-                out += wrap_tags('option', description, choice_attribs)
+                out += wrap_tags('option', desc[choice], choice_attribs)
             context.write(wrap_tags('select', out, this_attribs))
     %>
 </%def>
@@ -280,8 +285,8 @@
 
         attribs = {'name': name, 'type': 'hidden'}
         for value in values:
-            attribs['value'] = value
-            context.write(build_tag(attribs, 'input', void=True))
+            attribs['value'] = str(value)
+            context.write(input_(attribs))
     %>
 </%def>
 
