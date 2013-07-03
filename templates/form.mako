@@ -20,15 +20,13 @@
 <%def name="wrapped_form(fields, form_info={}, error={})">
     <%
         attribs = {
-            'action': form_info.get("action", ""),
             'method': form_info.get("method", "post"),
+            'action': form_info.get("action", ""),
+            'class': form_info.get("class", "")
         }
-        class_ = form_info.get("class", "")
-        if class_:
-            attribs['class'] = class_
-        context.write(wrap_tags('form',
-                capture(unwrapped_form, fields, form_info, error), attribs))
     %>
+    ${wrap_tags('form', capture(unwrapped_form, fields, form_info, error),
+        attribs)}
 </%def>
 
 <%def name="unwrapped_form(fields, form_info={}, error={})">
@@ -350,7 +348,12 @@
         if tag:
             items.append('<' + tag)
         for attrib, value in attribs.iteritems():
-            items.append('%s=%s' % (attrib, quoteattr(str(value))))
+            if value is None:
+                continue
+            if not isinstance(value, basestring):
+                value = str(value)
+            if len(value):
+                items.append('%s=%s' % (attrib, quoteattr(str(value))))
         out = ' '.join(items)
         if tag:
             if void:
