@@ -3,47 +3,52 @@
 </%doc>
 
 <%!
+    import copy
     from xml.sax.saxutils import quoteattr
 %>
 
 ##:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::( form )
 
-<%def name="form(fields, form_info={}, error={})">
+<%def name="form(fields, values={}, error={}, 
+    form_class='', form_action='', http_method='post',
+    submit_label='Save', cancel_uri=None,
+    wrap=True, buttonbar=True)">
     <%
-        if form_info.get('skip_form_wrap'):
-            unwrapped_form(fields, form_info, error)
-        else:
-            wrapped_form(fields, form_info, error)
-    %>
-</%def>
-
-<%def name="wrapped_form(fields, form_info={}, error={})">
-    <%
-        attribs = {
-            'method': form_info.get("method", "post"),
-            'action': form_info.get("action", ""),
-            'class': form_info.get("class", "")
-        }
-    %>
-    ${wrap_tags('form', capture(unwrapped_form, fields, form_info, error),
-        attribs)}
-</%def>
-
-<%def name="unwrapped_form(fields, form_info={}, error={})">
-    <%
+        # Build the inner form.
+        buff = []
         for field in fields:
             if isinstance(field, list):
-                fieldset(field, error)
+                buff.append(capture(fieldset, field, values, error))
             elif isinstance(field, dict):
-                dispatch_field(field, error)
+                buff.append(capture(dispatch_field, field, values, error))
             elif isinstance(field, str):
-                explanatory(field)
-        if not form_info.get('skip_buttonbar'):
-            buttonbar(form_info)
+                buff.append(capture(explanatory, field))
+        if buttonbar:
+            buff.append(capture(form_buttonbar, submit_label, cancel_uri))
+        content = ''.join(buff)
+
+        # Full form: wrap with tags.
+        if wrap:
+            attribs = {
+                'method': http_method,
+                'action': form_action,
+                'class': form_class,
+            }
+            content = wrap_tags('form', content, attribs)
     %>
+    ${content}
 </%def>
 
-<%def name="dispatch_field(field, error={})">
+<%def name="form_buttonbar(submit_label='Save', cancel_uri=None)">
+    <div class="form-buttonbar">
+        % if cancel_uri:
+            <a class="button-danger" href="${cancel_uri}">Cancel</a>
+        % endif
+        <input type="submit" value="${submit_label}" />
+    </div>
+</%def>
+
+<%def name="dispatch_field(field, values={}, error={})">
     <%
         handlers = {
             'text': input_text,
@@ -52,33 +57,21 @@
             'checkbox': checkbox,
             'radio': radio,
             'select': select,
-            'preserve': preserve,
+            'hidden': input_hidden,
+            'preserve': input_preserve,
         }
         type_ = field.get('type', 'text')
         try:
             handler = handlers[type_]
         except KeyError:
             return
-        handler(field, error)
+        handler(field, values, error)
     %>
-</%def>
-
-<%def name="buttonbar(form_info={})">
-    <%
-        submit_label=form_info.get("submit_label", "Save")
-        cancel = form_info.get('cancel')
-    %>
-    <div class="form-buttonbar">
-        % if cancel:
-            <a class="button-danger" href="${cancel}">Cancel</a>
-        % endif
-        <input class="submit" type="submit" value="${submit_label}" />
-    </div>
 </%def>
 
 ##:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::( elements )
 
-<%def name="fieldset(fields, error)">
+<%def name="fieldset(fields, values, error)">
     <%
         # Find legend
         legend = None
@@ -94,19 +87,20 @@
         <%
             for field in fields:
                 if isinstance(field, dict):
-                    dispatch_field(field, error)
+                    dispatch_field(field, values, error)
                 elif isinstance(field, str):
                     explanatory(field)
         %>
     </fieldset>
 </%def>
 
-<%def name="input_text(field, error={})">
+<%def name="input_text(field, values={}, error={})">
     <%
         name = field['name']
         type_ = field.get('type', 'text')
         label = field.get('label')
         class_ = field.get('class', '').split()
+        vals = get_field_values(field, values)
 
         attribs = {
             'name': name,
@@ -115,15 +109,14 @@
             'maxlength': field.get('maxlength', 64),
         }
 
-        try:
-            values = get_values(field)
-        except KeyError:
-            values = ['']
+        if not len(vals):
+            return
 
-        for index in range(len(values)):
+        context.write('<div class="input-text">')
+        for index in range(len(vals)):
             this_class = list(class_) # copy
             this_attribs = attribs.copy()
-            value = str(values[index])
+            value = str(vals[index])
             id_ = None
 
             if label and not index:
@@ -132,7 +125,7 @@
                 this_attribs['id'] = id_
             if len(value):
                 this_attribs['value'] = value
-            if is_error(field, index, error):
+            if is_error(field, error, index):
                 this_class.append('error')
             if is_required(field, index):
                 this_attribs['required'] = 'required'
@@ -141,18 +134,16 @@
                 this_attribs['class'] = ' '.join(this_class)
             out = build_tag(this_attribs, 'input', void=True)
             context.write(out)
+        context.write('</div>')
     %>
 </%def>
 
-<%def name="textarea(field, error={})">
+<%def name="textarea(field, values={}, error={})">
     <%
         name = field['name']
         lbl = field.get('label')
         class_ = field.get('class', '').split()
-        try:
-            values = get_values(field)
-        except KeyError:
-            values = ['']
+        vals = get_field_values(field, values)
 
         attribs = {
             'name': name,
@@ -160,10 +151,10 @@
             'cols': field.get('cols', 40),
             'maxlength': field.get('maxlength', 4096),
         }
-        for index in range(len(values)):
+        for index in range(len(vals)):
             this_class = list(class_) # copy
             this_attribs = attribs.copy()
-            value = str(values[index])
+            value = str(vals[index])
             id_ = None
 
             if lbl and not index:
@@ -175,19 +166,15 @@
     %>
 </%def>
 
-<%def name="checkbox(field, error)">
+<%def name="checkbox(field, values={}, error={})">
     <%
         name = field['name']
-
-        try:
-            values = get_values(field)
-        except KeyError:
-            values = ['']
+        vals = get_field_values(field, values)
         attribs = {'name': name, 'type': 'checkbox'}
 
-        for index in range(len(values)):
+        for index in range(len(vals)):
             this_attribs = attribs.copy()
-            value = str(values[index])
+            value = str(vals[index])
             id_ = '%s-%s' % (name, get_unique_field_id())
             this_attribs['id'] = id_
             if value:
@@ -198,15 +185,12 @@
     %>
 </%def>
 
-<%def name="radio(field, error)">
+<%def name="radio(field, values={}, error={})">
     <%
         name = field['name']
         lbl = field.get('label')
         desc = dict(zip(field['choices'], field['descriptions']))
-        try:
-            value = get_values(field)[0]
-        except:
-            value = ''
+        value = get_field_values(field, values)[0]
         attribs = {'name': name, 'type': 'radio'}
 
         out = ''
@@ -241,22 +225,19 @@
     ${build_tag(attribs, 'input', void=True)}
 </%def>
 
-<%def name="select(field, error={})">
+<%def name="select(field, values={}, error={})">
     <%
         name = field['name']
         lbl = field.get('label')
         class_ = field.get('class', '').split()
         desc = dict(zip(field['choices'], field['descriptions']))
         attribs = {'name': name}
-        try:
-            values = get_values(field)
-        except:
-            values = ['']
+        vals = get_field_values(field, values)
 
-        for index in range(len(values)):
+        for index in range(len(vals)):
             this_class = list(class_) # copy
             this_attribs = attribs.copy()
-            value = str(values[index])
+            value = str(vals[index])
             id_ = None
 
             if lbl and not index:
@@ -273,16 +254,26 @@
     %>
 </%def>
 
-<%def name="input_hidden(field, error={})">
+<%def name="get_field_values(field, values={})">
     <%
         name = field['name']
-        try:
-            values = get_values(field)
-        except KeyError:
-            values = ['']
+        #-- Explicit values passed in form override all.
+        if 'values' in field:
+            return field['values']
+        #-- Extract them from values structure
+        if name in values:
+            return values[name]
+        #-- Default: one field with no value.
+        return ['']
+    %>
+</%def>
 
-        attribs = {'name': name, 'type': 'hidden'}
-        for value in values:
+<%def name="input_hidden(field, values={}, error={})">
+    <%
+        vals = get_field_values(field, values)
+
+        attribs = {'name': field['name'], 'type': 'hidden'}
+        for value in vals:
             attribs['value'] = str(value)
             context.write(input_(attribs))
     %>
@@ -292,31 +283,31 @@
     <div class="explanatory">${text}</div>
 </%def>
 
-<%def name="preserve(field, error={})">
-    <%doc>
-        Preservation fields are used in cases where the presence of
-        a field is optional. If a value for a preservation field is
-        found in request.args, a hidden field will be placed into
-        the form. This field will be recirculated continually through
-        subsequent form submittals. This value may, of course, be
-        altered in request.args at any time to change the value of
-        the field. The value may even be removed from request.args,
-        resulting in the removal of the hidden field.
-
-        This may be used for various techniques, from extra parameters
-        tucked into forms during initial generation, to step-wise
-        forms that squirrel values away for a final submittal, and
-        more.
-    </%doc>
+<%def name="input_preserve(field, values={}, error={})">
     <%
-        if arg_is_present(field):
-            input_hidden(field)
+        name = field['name']
+        vals = None
+        if arg_is_present(name):
+            vals = request.args[name]
+        else:
+            vals = get_field_values(field, values)
+        if vals and (vals != ['']):
+            input_hidden(field, {name: vals})
     %>
 </%def>
 
 ##::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::( operators )
 
-<%def name="is_required(field, index)">
+<%def name="preserve(field, values)">
+    <%
+        if isinstance(field, dict):
+            field = field['name']
+        if arg_is_present(field):
+            values[field] = request.args[field]
+    %>
+</%def>
+
+<%def name="is_required(field, index=0)">
     <%
         try:
             return field['required'][index]
@@ -325,7 +316,7 @@
     %>
 </%def>
 
-<%def name="is_error(field, index, error)">
+<%def name="is_error(field, error, index)">
     <%
         if isinstance(field, dict):
             field = field['name']
@@ -396,11 +387,11 @@
     %>
 </%def>
 
-<%def name="field_is_not_preserve(field)">
-    <%
-        return field.get('type', text) != 'preserve'
-    %>
-</%def>
+##<%def name="field_is_not_preserve(field)">
+##    <%
+##        return field.get('type', text) != 'preserve'
+##    %>
+##</%def>
 
 <%def name="set_error(field, index, error)">
     <%
@@ -434,6 +425,12 @@
         id_ = request_data[key]
         request_data[key] += 1
         return id_
+    %>
+</%def>
+
+<%def name="request_args_deepcopy()">
+    <%
+        return copy.deepcopy(request.args)
     %>
 </%def>
 
