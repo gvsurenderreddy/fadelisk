@@ -116,7 +116,7 @@
         for index in range(len(vals)):
             this_class = list(class_) # copy
             this_attribs = attribs.copy()
-            value = str(vals[index])
+            value = unicode(vals[index])
             id_ = None
 
             if label and not index:
@@ -154,7 +154,7 @@
         for index in range(len(vals)):
             this_class = list(class_) # copy
             this_attribs = attribs.copy()
-            value = str(vals[index])
+            value = unicode(vals[index])
             id_ = None
 
             if lbl and not index:
@@ -174,7 +174,7 @@
 
         for index in range(len(vals)):
             this_attribs = attribs.copy()
-            value = str(vals[index])
+            value = unicode(vals[index])
             id_ = '%s-%s' % (name, get_unique_field_id())
             this_attribs['id'] = id_
             if value:
@@ -237,7 +237,7 @@
         for index in range(len(vals)):
             this_class = list(class_) # copy
             this_attribs = attribs.copy()
-            value = str(vals[index])
+            value = unicode(vals[index])
             id_ = None
 
             if lbl and not index:
@@ -274,7 +274,7 @@
 
         attribs = {'name': field['name'], 'type': 'hidden'}
         for value in vals:
-            attribs['value'] = str(value)
+            attribs['value'] = unicode(value)
             context.write(input_(attribs))
     %>
 </%def>
@@ -342,9 +342,9 @@
             if value is None:
                 continue
             if not isinstance(value, basestring):
-                value = str(value)
+                value = unicode(value)
             if len(value):
-                items.append('%s=%s' % (attrib, quoteattr(str(value))))
+                items.append('%s=%s' % (attrib, quoteattr(unicode(value))))
         out = ' '.join(items)
         if tag:
             if void:
