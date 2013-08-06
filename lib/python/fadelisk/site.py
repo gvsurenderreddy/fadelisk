@@ -105,12 +105,6 @@ class ProcessorHTML(resource.Resource):
         request.setResponseCode(200)
 
         path = request.path
-#        for charm, target in self.site.conf['charm'].iteritems():
-#            if path.startswith(charm):
-#                path = target or charm
-#                break
-#        with open("/tmp/path.txt", "w") as f:
-#            data = f.write(path)
         if path.endswith('/'):
             path += 'index.html'
 

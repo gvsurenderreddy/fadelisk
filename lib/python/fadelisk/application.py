@@ -38,7 +38,6 @@ class Application(object):
         'bind_address': '127.0.0.1',
         'process_user': 'www-data',
         'site_collections': ['/srv/www/site'],
-        #'charm': {},
         'directory_index': 'index.html',
     }
 
