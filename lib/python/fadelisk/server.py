@@ -119,7 +119,6 @@ class Server(object):
                     else:
                         sites[site_]['aliases'].append(alias)
 
-        # Use sites here
         for site_fqdn, site_data in sites.iteritems():
             print(site_fqdn)
             # Build and add resource
@@ -187,5 +186,4 @@ def start(conf, args):
     server = Server(conf, args)
     server.start()
     return server
-
 
