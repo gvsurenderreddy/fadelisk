@@ -63,9 +63,9 @@ class Server(object):
         for collection in self.conf['site_collections']:
             if not os.path.exists(collection):
                 continue
-            for site_ in os.listdir(collection):
+            for fqdn in os.listdir(collection):
                 #-- Build and check path
-                site_path = os.path.join(os.path.abspath(collection), site_)
+                site_path = os.path.join(os.path.abspath(collection), fqdn)
                 site_etc_path = os.path.join(site_path, 'etc')
                 if not os.path.isdir(site_path):
                     continue
@@ -77,62 +77,49 @@ class Server(object):
                 try:
                     site_conf = conf.ConfYAML(site_conf_file)
                 except OSError as err:
-                    print('/!\\ Error while reading config for', site_)
+                    print('/!\\ Error while reading config for', fqdn)
                     print(str(err))
                     continue
 
                 #-- Check if site is online.
                 if not site_conf.get('site_online'):
+                    print(fqdn, "is OFFLINE")
                     # TODO, possibly: provide offline resource.
                     continue
 
                 #-- Add site if not already found...
-                if site_ in sites:
-                    print('Skipping site', site_, 'which was already present.')
+                if fqdn in self.sites:
+                    print('- Skipping site', fqdn, 'which was already present.')
                     continue
-                #   ...and not listed as an alias for another site.
-                for site_fqdn, site_data in sites.iteritems():
-                    if site_ in site_data['aliases']:
-                        print("Site", site_, "already listed as alias for", 
-                              site_fqdn)
+                # ...and not listed as an alias for another site.
+                for site_ in self.sites:
+                    if site_ in site_.get_aliases():
+                        print("- Site", fqdn, "already listed as alias for",
+                              site_)
                         break
                 else:
-                    sites[site_] = {
-                        'path': site_path,
-                        'conf': site_conf,
-                        'aliases': [],
-                    }
+                    this_site = site.Site(site_path, self.conf, site_conf)
+                    self.vhost.addHost(fqdn, this_site.resource)
+                    self.sites.append(this_site)
+                    print(fqdn)
 
                 #-- Add aliases...
                 for alias in site_conf.get('site_aliases', []):
                     #   ...if not present as site...
-                    if alias in sites:
-                        print('Alias', alias, 'for', site_,
+                    if alias in [s.fqdn for s in self.sites]:
+                        print(' - Alias', alias, 'for', fqdn,
                               'is already present as site')
                         continue
                     #   ...and not listed as an alias in some other site.
-                    for site_fqdn, site_data in sites.iteritems():
-                        if site_ in site_data['aliases']:
-                            print("Alias", alias,
-                                  "already listed as alias for", site_fqdn)
+                    for site_ in self.sites:
+                        if alias in site_.get_aliases():
+                            print(" - Alias", alias,
+                                  "already listed as alias for", site_.fqdn)
                             break
                     else:
-                        sites[site_]['aliases'].append(alias)
-
-        for site_fqdn, site_data in sites.iteritems():
-            print(site_fqdn)
-            # Build and add resource
-            this_site = site.Site(site_data['path'], self.conf,
-                                  site_data['conf'])
-
-            # Add site for the FQDN of the directory
-            self.sites.append(this_site)
-            self.vhost.addHost(site_fqdn, this_site.resource)
-
-            # Add hosts for each aliases. Re-use the resource.
-            for alias in site_data['aliases']:
-                self.vhost.addHost(alias, this_site.resource)
-                print(' +', alias)
+                        this_site.add_alias(alias)
+                        self.vhost.addHost(alias, this_site.resource)
+                        print(' +', alias)
 
     def reopen_std_streams(self):
         null_fd = os.open('/dev/null', os.O_RDWR)

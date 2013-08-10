@@ -5,11 +5,14 @@ from mako.lookup import TemplateLookup
 from mako import exceptions
 
 class Site(object):
-    def __init__(self, path, application_conf, site_conf):
+    def __init__(self, path, application_conf, site_conf, aliases=[]):
         self.path = path
         self.application_conf = application_conf
         self.conf = site_conf
+        self._aliases = aliases
+
         self.data = {}
+        self.fqdn = os.path.basename(self.path)
 
         self.error_resource = ErrorResource(self, '/errors/404_not_found.html')
         #self.error_resource.processors = {'.html': self.factory_processor_html}
@@ -52,6 +55,12 @@ class Site(object):
             output_encoding='utf-8',
             filesystem_checks = True,
         )
+
+    def get_aliases(self):
+        return self._aliases
+
+    def add_alias(self, alias):
+        self._aliases.append(alias)
 
     def rel_path(self, path=None):
         if path:
