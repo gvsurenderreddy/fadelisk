@@ -5,11 +5,14 @@ from mako.lookup import TemplateLookup
 from mako import exceptions
 
 class Site(object):
-    def __init__(self, path, application_conf, site_conf, aliases=[]):
+    def __init__(self, path, application_conf, site_conf, aliases=None):
         self.path = path
         self.application_conf = application_conf
         self.conf = site_conf
-        self._aliases = aliases
+        if isinstance(aliases, list):
+            self._aliases = aliases
+        else:
+            self._aliases = []
 
         self.data = {}
         self.fqdn = os.path.basename(self.path)

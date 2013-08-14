@@ -59,7 +59,6 @@ class Server(object):
         reactor.run()
 
     def gather_sites(self):
-        sites = {}
         for collection in self.conf['site_collections']:
             if not os.path.exists(collection):
                 continue
@@ -88,14 +87,14 @@ class Server(object):
                     continue
 
                 #-- Add site if not already found...
-                if fqdn in self.sites:
+                if fqdn in [s.fqdn for s in self.sites]:
                     print('- Skipping site', fqdn, 'which was already present.')
                     continue
                 # ...and not listed as an alias for another site.
                 for site_ in self.sites:
-                    if site_ in site_.get_aliases():
+                    if fqdn in site_.get_aliases():
                         print("- Site", fqdn, "already listed as alias for",
-                              site_)
+                              site_.fqdn)
                         break
                 else:
                     this_site = site.Site(site_path, self.conf, site_conf)
