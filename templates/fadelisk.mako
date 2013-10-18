@@ -5,6 +5,10 @@
 %>
 
 <%
+    #-- Skip content generation for HEAD requests.
+    if request.method == "HEAD":
+        return
+
     request_data.update({
         #-- For delivering media of other types, like image/png. Just pack up
         # your data payload and request.setHeader your content type.
