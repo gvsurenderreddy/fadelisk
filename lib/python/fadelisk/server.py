@@ -8,8 +8,8 @@ from twisted.internet import reactor, protocol, defer
 from twisted.web import server, vhost, static
 from twisted.protocols import basic
 
-import conf
-import site
+from . import conf
+from . import site
 
 class ServerControlProtocol(basic.LineReceiver):
     def lineReceived(self, line):

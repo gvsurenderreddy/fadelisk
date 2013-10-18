@@ -8,9 +8,9 @@ from optparse import OptionParser
 from twisted.internet import pollreactor
 pollreactor.install()
 
-import conf
-import server
-import client
+from . import conf
+from . import server
+from . import client
 
 class Application(object):
     # If no configuration file is specified on the command line, this built-in

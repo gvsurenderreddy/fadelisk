@@ -1,18 +1,20 @@
 
+from __future__ import print_function
+
 from twisted.internet import reactor, protocol, defer
 from twisted.protocols import basic
 
-import conf
+from . import conf
 
 class ClientProtocol(basic.LineReceiver):
     def connectionMade(self):
-        #print 'Connected.'
+        #print('Connected.')
         self.sendLine("shutdown")
         #self.loseConnection()
 
     def connectionLost(self, reason):
         pass
-        #print "connection lost"
+        #print("connection lost")
 
     def sendMessage(self, msg):
         self.sendLine(msg)
@@ -30,15 +32,15 @@ class ClientFactory(protocol.ClientFactory):
 
     def startedConnecting(self, connector):
         pass
-        #print 'Started to connect.'
+        #print('Started to connect.')
 
     def clientConnectionLost(self, connector, reason):
-        #print 'Lost client connection.  Reason:', reason
+        #print('Lost client connection.  Reason:', reason)
         # connector.connect() #reconnect
         reactor.stop()
 
     def clientConnectionFailed(self, connector, reason):
-        print 'Client connection failed. Reason:', reason
+        print('Client connection failed. Reason:', reason)
         reactor.stop()
 
 

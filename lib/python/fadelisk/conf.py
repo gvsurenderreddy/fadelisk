@@ -1,6 +1,5 @@
 
 from __future__ import with_statement
-from __future__ import print_function
 
 import os
 import sys
@@ -24,7 +23,7 @@ class ConfDict(dict):
         self.lock = threading.Lock()
 
     def soft_update(self, data):
-        for key, value in data.items():
+        for key, value in list(data.items()):
             self.setdefault(key, value)
 
     def replace(self, data):

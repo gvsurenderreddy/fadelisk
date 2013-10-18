@@ -1,4 +1,5 @@
 
+import sys
 import os
 from twisted.web import resource, static
 from mako.lookup import TemplateLookup
@@ -130,6 +131,7 @@ class ProcessorHTML(resource.Resource):
                 site=self.site,
                 **self.site.template_context
             )
+            #request.setHeader('Content-Type', 'text/plain')
             return request_data.get('payload', None) or content
         except:
             request.setResponseCode(500)
