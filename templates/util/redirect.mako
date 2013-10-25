@@ -6,7 +6,7 @@
 %>
 </%def>
 
-<%def name="refresh(url, timeout=0)">
+<%def name="refresh(url="", timeout=0)">
 <%
     request.setHeader('Refresh', '%s; url=%s' % (timeout, url))
 %>
