@@ -5,6 +5,7 @@
 <%!
     import copy
     from xml.sax.saxutils import quoteattr
+    from bson.objectid import ObjectId
 %>
 
 ##:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::( form )
@@ -431,6 +432,63 @@
 <%def name="request_args_deepcopy()">
     <%
         return copy.deepcopy(request.args)
+    %>
+</%def>
+
+<%def name="args_to_data(fields, args=None)">
+    <%
+        #fields = form.get_all_fields(self.attr.fields)
+        flat_fields = get_all_fields(fields)            # "Flatten" the fields
+        if not args:                                    # Might pass args
+            args = request.args
+
+        data = {}
+        for field in flat_fields:
+            if field.get('type') == 'preserve': # Preserves aren't part of data
+                continue
+            name = field.get('name')
+            if name not in args:                # Not in form for some reason?
+                continue                        # TODO: Should warn to log
+
+            values = filter(bool, request.args[name]) # Only non-empty strings
+            if not values:                      # Any left?
+                continue
+            if len(values) == 1:                # Unwrap single value
+                values = values[0]
+
+            nodes = name.split('__')            # TODO: Reasonable separator?
+            this_node = data                    # Start at top
+            for node in nodes[:-1]:             # Provide dictionary tree
+                this_node = this_node.setdefault(node, {})
+            this_node[nodes[-1]] = values       # Values at bottom level
+
+        if 'id' in args:                        # TODO: Move to DB interface
+            data['_id'] = ObjectId(args['id'][0])
+
+        return data
+    %>
+</%def>
+
+<%def name="data_to_values(data)">
+    <%
+        values = {}
+
+        form_name = []
+        def node_name():
+            return '__'.join(form_name)
+        def descend(thing):
+            for name, item in thing.iteritems():
+                form_name.append(name)
+                if isinstance(item, dict):
+                    descend(item)
+                elif isinstance(item, list):
+                    values[node_name()] = item
+                else:
+                    values[node_name()] = [unicode(item)]
+                form_name.pop()
+        descend(data)
+
+        return values
     %>
 </%def>
 
