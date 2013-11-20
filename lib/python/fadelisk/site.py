@@ -127,7 +127,6 @@ class ProcessorHTML(resource.Resource):
             content = template.render(
                 request=request,
                 request_data=request_data,
-                site_data=self.site.data,
                 site=self.site,
                 **self.site.template_context
             )
@@ -159,7 +158,6 @@ class ErrorResource(resource.Resource):
         return template.render(
             request=request,
             request_data={},
-            site_data=self.site.data,
             site=self.site,
             **self.site.template_context
         )
