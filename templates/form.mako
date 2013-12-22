@@ -238,10 +238,12 @@
         vals = get_field_values(field, values)
 
         for index in range(len(vals)):
-            this_class = list(class_) # copy
             this_attribs = attribs.copy()
+            this_class = list(class_)
             value = unicode(vals[index])
             id_ = None
+            if is_required(field, index):
+                this_class.append('required')
 
             if lbl and not index:
                 id_ = '%s-%s' % (name, get_unique_field_id())
@@ -253,6 +255,7 @@
                 if choice == value:
                     choice_attribs['selected'] = 'selected'
                 out += wrap_tags('option', items[choice], choice_attribs)
+            this_attribs['class'] = ' '.join(this_class)
             context.write(wrap_tags('select', out, this_attribs))
     %>
 </%def>
