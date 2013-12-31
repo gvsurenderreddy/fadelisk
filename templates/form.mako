@@ -190,14 +190,15 @@
     <%
         name = field['name']
         lbl = field.get('label')
-        desc = dict(zip(field['choices'], field['descriptions']))
+        descriptions = field.get('descriptions') or field['choices']
+        items = dict(zip(field['choices'], descriptions))
         value = get_field_values(field, values)[0]
         attribs = {'name': name, 'type': 'radio'}
 
         out = ''
         if lbl:
             out += label(lbl)
-        for choice in field['choices']:
+        for choice, descr in items.iteritems():
             id_ = '%s-%s' % (name, get_unique_field_id())
             this_attribs = attribs.copy()
             this_attribs['value'] = choice
@@ -207,7 +208,7 @@
             out += wrap_tags(
                 'div',
                 (capture(input_, this_attribs) +
-                    capture(label, desc[choice], id_)),
+                capture(label, descr, id_)),
                 {'class': 'radio'})
         context.write(out)
     %>
@@ -231,15 +232,18 @@
         name = field['name']
         lbl = field.get('label')
         class_ = field.get('class', '').split()
-        desc = dict(zip(field['choices'], field['descriptions']))
+        descriptions = field.get('descriptions') or field['choices']
+        items = dict(zip(field['choices'], descriptions))
         attribs = {'name': name}
         vals = get_field_values(field, values)
 
         for index in range(len(vals)):
-            this_class = list(class_) # copy
             this_attribs = attribs.copy()
+            this_class = list(class_)
             value = unicode(vals[index])
             id_ = None
+            if is_required(field, index):
+                this_class.append('required')
 
             if lbl and not index:
                 id_ = '%s-%s' % (name, get_unique_field_id())
@@ -250,7 +254,8 @@
                 choice_attribs = {'value': choice}
                 if choice == value:
                     choice_attribs['selected'] = 'selected'
-                out += wrap_tags('option', desc[choice], choice_attribs)
+                out += wrap_tags('option', items[choice], choice_attribs)
+            this_attribs['class'] = ' '.join(this_class)
             context.write(wrap_tags('select', out, this_attribs))
     %>
 </%def>
