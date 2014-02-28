@@ -57,6 +57,7 @@ class Site(object):
             module_directory = self.rel_path('tmp/mako-module'),
             input_encoding='utf-8',
             output_encoding='utf-8',
+            encoding_errors='replace',
             filesystem_checks = True,
         )
 
