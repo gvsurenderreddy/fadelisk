@@ -110,6 +110,9 @@
             'maxlength': field.get('maxlength', 64),
         }
 
+        if 'autocomplete' in field:
+            attribs['autocomplete'] = field['autocomplete']
+
         if not len(vals):
             return
 
