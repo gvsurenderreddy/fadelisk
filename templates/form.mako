@@ -235,6 +235,9 @@
         name = field['name']
         lbl = field.get('label')
         class_ = field.get('class', '').split()
+        allow_none_choice = field.get('allow_none_choice', False)
+        none_choice_value = field.get('none_choice_value', '')
+        none_choice_description = field.get('none_choice_description','(none)')
         descriptions = field.get('descriptions') or field['choices']
         items = dict(zip(field['choices'], descriptions))
         attribs = {'name': name}
@@ -253,11 +256,15 @@
                 context.write(label(lbl, id_))
                 this_attribs['id'] = id_
             out = ''
-            for choice in field['choices']:
+            def build_choice(choice, description):
                 choice_attribs = {'value': choice}
                 if choice == value:
                     choice_attribs['selected'] = 'selected'
-                out += wrap_tags('option', items[choice], choice_attribs)
+                return wrap_tags('option', description, choice_attribs)
+            if allow_none_choice:
+                out += build_choice(none_choice_value, none_choice_description)
+            for choice in field['choices']:
+                out += build_choice(choice, items[choice])
             this_attribs['class'] = ' '.join(this_class)
             context.write(wrap_tags('select', out, this_attribs))
     %>
