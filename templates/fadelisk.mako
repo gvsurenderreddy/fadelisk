@@ -5,10 +5,7 @@
 %>
 
 <%
-    #-- Skip content generation for HEAD requests.
-    if request.method == "HEAD":
-        return
-
+    request_data.clear()
     request_data.update({
         #-- For delivering media of other types, like image/png. Just pack up
         # your data payload and request.setHeader your content type.
@@ -25,6 +22,14 @@
         #-- Debug messages: Strings added to this list may be formatted
         #   later to ask as informational output during development.
         'debug': [],
+
+        #-- Extra Content: These can be used by a top-level site layout
+        #   template to allow inheriting pages to add additional content.
+        #   To use these, your top-level template must capture next.body
+        #   before emitting the document head.
+        'extra_head_content': [],
+        'extra_scripts': [],
+        'extra_stylesheets': [],
     })
 
     try:
