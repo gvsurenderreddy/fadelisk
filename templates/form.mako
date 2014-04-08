@@ -158,6 +158,8 @@
         for index in range(len(vals)):
             this_class = list(class_) # copy
             this_attribs = attribs.copy()
+            if is_required(field, index):
+                this_attribs['required'] = 'required'
             value = unicode(vals[index])
             id_ = None
 
