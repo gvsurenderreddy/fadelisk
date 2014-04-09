@@ -27,9 +27,11 @@
         #   template to allow inheriting pages to add additional content.
         #   To use these, your top-level template must capture next.body
         #   before emitting the document head.
-        'extra_head_content': [],
-        'extra_scripts': [],
+        'extra_local_fonts': [],
+        'extra_google_fonts': [],
         'extra_stylesheets': [],
+        'extra_scripts': [],
+        'extra_head_content': [],
     })
 
     try:
