@@ -6,13 +6,13 @@
     from xml.sax.saxutils import quoteattr
 %>
 
-<%def name="build_tag(tag='', attribs={}, content='', void=False)">
+<%def name="build_tag(tag='', attribs={}, content=None, void=False)">
     <%
         items = ['<%s' % tag]
         if attribs:
             items.append(' ')
             items.append(build_attribs(attribs))
-        if not content:
+        if content == None:
             if void:
                 items.append(' /')
         else:

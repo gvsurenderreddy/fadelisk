@@ -2,6 +2,8 @@
     FORMULA: A library of functions to build forms from a data structure.
 </%doc>
 
+<%namespace name="tag" file="/tag.mako" />
+
 <%!
     import copy
     from xml.sax.saxutils import quoteattr
@@ -35,7 +37,7 @@
                 'action': form_action,
                 'class': form_class,
             }
-            content = wrap_tags('form', content, attribs)
+            content = tag.build_tag('form', attribs, content)
     %>
     ${content}
 </%def>
@@ -125,7 +127,7 @@
 
             if label and not index:
                 id_ = '%s-%s' % (name, get_unique_field_id())
-                context.write(wrap_tags('label', label, {'for': id_}))
+                context.write(tag.build_tag('label', {'for': id_}, label))
                 this_attribs['id'] = id_
             if len(value):
                 this_attribs['value'] = value
@@ -136,7 +138,7 @@
                 this_class.append('required')
             if this_class:
                 this_attribs['class'] = ' '.join(this_class)
-            out = build_tag(this_attribs, 'input', void=True)
+            out = tag.build_tag('input', this_attribs, void=True)
             context.write(out)
         context.write('</div>')
     %>
@@ -167,7 +169,7 @@
                 id_ = '%s-%s' % (name, get_unique_field_id())
                 label(lbl, id_)
                 this_attribs['id'] = id_
-            out = wrap_tags('textarea', value, this_attribs)
+            out = tag.build_tag('textarea', this_attribs, value)
             context.write(out)
     %>
 </%def>
@@ -185,10 +187,10 @@
             this_attribs['id'] = id_
             if value:
                 this_attribs['checked'] = 'checked'
-            ckbox = capture(input_, this_attribs)
+            ckbox = tag.build_tag('input', this_attribs, void=True)
             lbl = capture(label, field['label'], id_)
-            context.write(wrap_tags('div', ckbox + lbl, {'class': 'checkbox'}))
     %>
+    ${tag.build_tag('div', {'class': 'checkbox'}, ckbox + lbl)}
 </%def>
 
 <%def name="radio(field, values={}, error={})">
@@ -210,13 +212,13 @@
             this_attribs['id'] = id_
             if choice == value:
                 this_attribs['checked'] = 'checked'
-            out += wrap_tags(
-                'div',
-                (capture(input_, this_attribs) +
-                capture(label, descr, id_)),
-                {'class': 'radio'})
-        context.write(out)
+                out += tag.build_tag(
+                    'div',
+                    {'class': 'radio'}
+                    (capture(input_, this_attribs)+capture(label, descr, id_)),
+                )
     %>
+    ${out}
 </%def>
 
 <%def name="label(content, for_id=None)">
@@ -225,11 +227,11 @@
         if for_id:
             attribs['for'] = for_id
     %>
-    ${wrap_tags('label', content, attribs)}
+    ${tag.build_tag('label', attribs, content)}
 </%def>
 
 <%def name="input_(attribs)">
-    ${build_tag(attribs, 'input', void=True)}
+    ${tag.build_tag('input', attribs, void=True)}
 </%def>
 
 <%def name="select(field, values={}, error={})">
@@ -262,14 +264,14 @@
                 choice_attribs = {'value': choice}
                 if choice == value:
                     choice_attribs['selected'] = 'selected'
-                return wrap_tags('option', description, choice_attribs)
+                return tag.build_tag('option', choice_attribs, description)
             if allow_none_choice:
                 out += build_choice(none_choice_value, none_choice_description)
             for choice in field['choices']:
                 out += build_choice(choice, items[choice])
             this_attribs['class'] = ' '.join(this_class)
-            context.write(wrap_tags('select', out, this_attribs))
     %>
+    ${tag.build_tag('select', this_attribs, out)}
 </%def>
 
 <%def name="get_field_values(field, values={})">
@@ -342,33 +344,6 @@
             return error[field][index]
         except:
             return False
-    %>
-</%def>
-
-<%def name="wrap_tags(tag, content='', attribs={})">
-    <%
-        return '%s%s</%s>' % (build_tag(attribs, tag), content, tag) 
-    %>
-</%def>
-
-<%def name="build_tag(attribs, tag=None, void=False)">
-    <%
-        items = []
-        if tag:
-            items.append('<' + tag)
-        for attrib, value in attribs.iteritems():
-            if value is None:
-                continue
-            if not isinstance(value, basestring):
-                value = unicode(value)
-            if len(value):
-                items.append('%s=%s' % (attrib, quoteattr(unicode(value))))
-        out = ' '.join(items)
-        if tag:
-            if void:
-                out += ' /'
-            out += '>'
-        return out
     %>
 </%def>
 
