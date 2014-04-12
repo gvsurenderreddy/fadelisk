@@ -6,16 +6,14 @@ from mako.lookup import TemplateLookup
 from mako import exceptions
 
 class Site(object):
-    def __init__(self, path, application_conf, site_conf, aliases=None):
+    def __init__(self, path, application_conf, site_conf, aliases=[]):
         self.path = path
         self.application_conf = application_conf
         self.conf = site_conf
-        if isinstance(aliases, list):
-            self._aliases = aliases
-        else:
-            self._aliases = []
+        self.cache = {}
+        self.initialize_cache()
+        self._aliases = list(aliases)
 
-        self.data = {}
         self.fqdn = os.path.basename(self.path)
 
         self.error_resource = ErrorResource(self, '/errors/404_not_found.html')
@@ -35,15 +33,7 @@ class Site(object):
                 static.File(self.rel_path(directory))
             )
 
-        self.template_context = {
-            #'vhost_path': self.path,
-            'cache': {
-                'db': {},
-                'conf': {},
-                'file': {},
-                'data': {},
-            },
-        }
+        # Build list of directories to use for template resolution
         template_lookup_directories = [
             self.rel_path('content'),
             self.rel_path('templates'),
@@ -52,13 +42,33 @@ class Site(object):
         template_lookup_directories.extend(
             self.application_conf.get('template_directories', [])
         )
+
+        # Create the template resolvers
+        template_lookup_options = {
+            'directories': template_lookup_directories,
+            'module_directory': self.rel_path('tmp/mako-module'),
+            'input_encoding': 'utf-8',
+            'output_encoding': 'utf-8',
+            'encoding_errors': 'replace',
+        }
+
         self.template_lookup = TemplateLookup(
-            directories = template_lookup_directories,
-            module_directory = self.rel_path('tmp/mako-module'),
-            input_encoding='utf-8',
-            output_encoding='utf-8',
-            encoding_errors='replace',
+            **template_lookup_options
+        )
+        self.template_lookup_debug_mode = TemplateLookup(
             filesystem_checks = True,
+            **template_lookup_options
+        )
+
+    def initialize_cache(self):
+        self.cache.clear()
+        self.cache.update(
+            {
+                'db': {},
+                'conf': {},
+                'file': {},
+                'data': {},
+            }
         )
 
     def get_aliases(self):
@@ -75,31 +85,33 @@ class Site(object):
     def factory_processor_html(self, request_path, registry):
         return ProcessorHTML(request_path, registry, self)
 
+
 class SneakyStatic(static.File):
     def __init__(self, path, defaultType="text/html", ignoredExts=(),
                  registry=None, allowExt=0):
         static.File.__init__(self, path, defaultType, ignoredExts,
                              registry, allowExt)
 
+
 class ProcessorHTML(resource.Resource):
     isLeaf = True
     allowedMethods = ('GET', 'POST', 'HEAD')
     internal_server_error = """
-    <!doctype html>
-    <html lang="en">
-        <head>
-            <meta charset="utf-8">
-            <link rel="icon" href="/images/favicon.png" type="image/png">
-            <title>Internal Server Error</title>
-        </head>
-        <body>
-            <h1>Internal Server Error</h1>
-            <p>
-                The web server has encountered an internal server error and is 
-                unable to fulfill your request
-            </p>
-        </body>
-    </html>
+        <!doctype html>
+        <html lang="en">
+            <head>
+                <meta charset="utf-8">
+                <link rel="icon" href="/images/favicon.png" type="image/png">
+                <title>Internal Server Error</title>
+            </head>
+            <body>
+                <h1>Internal Server Error</h1>
+                <p>
+                    The web server has encountered an internal server error
+                    and is unable to fulfill your request
+                </p>
+            </body>
+        </html>
     """
 
     def __init__(self, path, registry, site):
@@ -107,6 +119,10 @@ class ProcessorHTML(resource.Resource):
         self.path = path
         self.registry = registry
         self.site = site
+
+    #-- By default, twisted calls render_GET for HEAD requests
+    #def render_HEAD(self, request):
+    #    return self.render_request(request)
 
     def render_GET(self, request):
         return self.render_request(request)
@@ -122,17 +138,28 @@ class ProcessorHTML(resource.Resource):
         if path.endswith('/'):
             path += 'index.html'
 
-        request_data = {}
+        # Clear data before request
+        request_data = {}                       # every time, new ref
+        if self.site.conf.get('debug'):
+            self.site.initialize_cache()        # only in debug, preserve ref
+
+        # Render the template
         try:
-            template = self.site.template_lookup.get_template(path)
+            if self.site.conf.get('debug'):
+                template_lookup = self.site.template_lookup_debug_mode
+            else:
+                template_lookup = self.site.template_lookup_debug_mode
+            #template = self.site.template_lookup.get_template(path)
+            template = template_lookup.get_template(path)
             content = template.render(
+                site=self.site,
                 request=request,
                 request_data=request_data,
-                site=self.site,
-                **self.site.template_context
+                cache=self.site.cache,
             )
             #request.setHeader('Content-Type', 'text/plain')
-            return request_data.get('payload', None) or content
+            return request_data.get('payload') or content
+
         except:
             request.setResponseCode(500)
             if self.site.conf.get('debug'):
@@ -157,10 +184,10 @@ class ErrorResource(resource.Resource):
 
         template = self.site.template_lookup.get_template(self.path)
         return template.render(
+            site=self.site,
             request=request,
             request_data={},
-            site=self.site,
-            **self.site.template_context
+            cache=self.site.cache,
         )
 
 
