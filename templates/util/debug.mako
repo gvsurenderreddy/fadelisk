@@ -25,32 +25,22 @@
 
 <%def name="display()">
     <%
-        if not 'debug' in request_data:
+        if not site.conf.get('debug'):
             return ''
-        if not site.conf['debug']:
+        messages = request_data.get('debug', [])
+        if not messages:
             return ''
-
-#        debug_strings = []
-#        for item in request_data['debug']:
-#            try:
-#                debug_strings.append("<p>%s</p>\n" % str(item))
-#            except:
-#                pass
-#        debug_concat = ''.join(debug_strings)
-#
-#        #if not debug_concat:
-#        #    return
     %>
     <div id="debug-console">
-        % for message in request_data['debug']:
-            <p>${message |h,trim}</p>
+        % for message in messages:
+            <pre>${message|trim,h}</pre>
         % endfor
     </div>
 </%def>
 
 <%def name="pretty_print(something)">
     <%
-        pp = pprint.PrettyPrinter(indent=4)
+        pp = pprint.PrettyPrinter(indent=2, width=240)
         append(pp.pformat(something))
     %>
 </%def>
