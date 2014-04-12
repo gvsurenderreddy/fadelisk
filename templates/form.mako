@@ -189,8 +189,9 @@
                 this_attribs['checked'] = 'checked'
             ckbox = tag.build_tag('input', this_attribs, void=True)
             lbl = capture(label, field['label'], id_)
+        out = tag.build_tag('div', {'class': 'checkbox'}, ckbox + lbl)
     %>
-    ${tag.build_tag('div', {'class': 'checkbox'}, ckbox + lbl)}
+    ${out}
 </%def>
 
 <%def name="radio(field, values={}, error={})">
