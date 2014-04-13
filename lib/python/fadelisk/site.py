@@ -7,57 +7,63 @@ from mako import exceptions
 
 class Site(object):
     def __init__(self, path, application_conf, site_conf, aliases=[]):
+        #-- Save args
         self.path = path
         self.application_conf = application_conf
         self.conf = site_conf
-        self.cache = {}
-        self.initialize_cache()
         self._aliases = list(aliases)
 
+        #-- Extract FQDN from directory base
         self.fqdn = os.path.basename(self.path)
 
-        self.error_resource = ErrorResource(self, '/errors/404_not_found.html')
-        #self.error_resource.processors = {'.html': self.factory_processor_html}
-        #self.error_resource.childNotFound = resource.NoResource("NO RESOURCE")
+        #-- Initialize Cache
+        self.cache = {}
+        self.initialize_cache()
 
+        #-- Build resource tree from site directory structure
         self.resource = static.File(self.rel_path('content'))
         #self.resource = SneakyStatic(self.rel_path('content'))
         self.resource.indexNames=['index.html', 'index.htm']
-        self.resource.processors = {'.html': self.factory_processor_html}
+        self.resource.processors = {
+            '.html': self.factory_processor_html,
+            '.htm': self.factory_processor_html,
+        }
+
+        #-- "Lift" some subdirectories above content dir to keep them separate
+        for directory in self.conf.get('top_level_directories', []):
+            self.resource.putChild(directory,
+                static.File(self.rel_path(directory)))
+
+        #-- Build Error resource for not-found condition
+        self.error_resource = ErrorResource(self, '/errors/404_not_found.html')
+        #self.error_resource.processors = {'.html':self.factory_processor_html}
+        #self.error_resource.childNotFound = resource.NoResource("NO RESOURCE")
         self.resource.childNotFound = self.error_resource
 
-        # "Lift" some subdirectories above content dir to keep them separate
-        for directory in self.conf.get('top_level_directories', []):
-            self.resource.putChild(
-                directory,
-                static.File(self.rel_path(directory))
-            )
-
-        # Build list of directories to use for template resolution
-        template_lookup_directories = [
+        #-- Build list of directories to use for template resolution
+        self.template_lookup_directories = [
             self.rel_path('content'),
             self.rel_path('templates'),
             self.rel_path('template'),
         ]
-        template_lookup_directories.extend(
+        self.template_lookup_directories.extend(
             self.application_conf.get('template_directories', [])
         )
 
-        # Create the template resolvers
-        template_lookup_options = {
-            'directories': template_lookup_directories,
+        #-- Create the template resolvers
+        self.template_lookup_options = {
+            'directories': self.template_lookup_directories,
             'module_directory': self.rel_path('tmp/mako-module'),
             'input_encoding': 'utf-8',
             'output_encoding': 'utf-8',
             'encoding_errors': 'replace',
         }
-
         self.template_lookup = TemplateLookup(
-            **template_lookup_options
+            **self.template_lookup_options
         )
         self.template_lookup_debug_mode = TemplateLookup(
             filesystem_checks = True,
-            **template_lookup_options
+            **self.template_lookup_options
         )
 
     def initialize_cache(self):
@@ -86,11 +92,11 @@ class Site(object):
         return ProcessorHTML(request_path, registry, self)
 
 
-class SneakyStatic(static.File):
-    def __init__(self, path, defaultType="text/html", ignoredExts=(),
-                 registry=None, allowExt=0):
-        static.File.__init__(self, path, defaultType, ignoredExts,
-                             registry, allowExt)
+#class SneakyStatic(static.File):
+#    def __init__(self, path, defaultType="text/html", ignoredExts=(),
+#                 registry=None, allowExt=0):
+#        static.File.__init__(self, path, defaultType, ignoredExts,
+#                             registry, allowExt)
 
 
 class ProcessorHTML(resource.Resource):
@@ -116,8 +122,8 @@ class ProcessorHTML(resource.Resource):
 
     def __init__(self, path, registry, site):
         resource.Resource.__init__(self)
-        self.path = path
-        self.registry = registry
+        #self.path = path
+        #self.registry = registry
         self.site = site
 
     #-- By default, twisted calls render_GET for HEAD requests
@@ -132,7 +138,6 @@ class ProcessorHTML(resource.Resource):
 
     def render_request(self, request):
         request.setHeader('server', self.site.application_conf['server'])
-        request.setResponseCode(200)
 
         path = request.path
         if path.endswith('/'):
@@ -148,8 +153,7 @@ class ProcessorHTML(resource.Resource):
             if self.site.conf.get('debug'):
                 template_lookup = self.site.template_lookup_debug_mode
             else:
-                template_lookup = self.site.template_lookup_debug_mode
-            #template = self.site.template_lookup.get_template(path)
+                template_lookup = self.site.template_lookup
             template = template_lookup.get_template(path)
             content = template.render(
                 site=self.site,
@@ -158,6 +162,7 @@ class ProcessorHTML(resource.Resource):
                 cache=self.site.cache,
             )
             #request.setHeader('Content-Type', 'text/plain')
+            request.setResponseCode(200)
             return request_data.get('payload') or content
 
         except:
@@ -182,7 +187,11 @@ class ErrorResource(resource.Resource):
         request.setHeader('server', self.site.application_conf['server'])
         request.setResponseCode(404)
 
-        template = self.site.template_lookup.get_template(self.path)
+        if self.site.conf.get('debug'):
+            template_lookup = self.site.template_lookup_debug_mode
+        else:
+            template_lookup = self.site.template_lookup
+        template = template_lookup.get_template(self.path)
         return template.render(
             site=self.site,
             request=request,
