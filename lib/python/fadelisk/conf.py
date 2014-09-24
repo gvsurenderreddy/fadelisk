@@ -88,7 +88,7 @@ class ConfYAML(ConfDynamicDict):
         mtime = os.stat(self.filename).st_mtime
         if mtime != self.timestamp:
             with open(self.filename) as yaml_file:
-                data = yaml.load(yaml_file) or {}
+                data = yaml.load(yaml_file, Loader=yaml.CLoader) or {}
             if not isinstance(data, dict):
                 raise ConfFormatError('ConfYAML target must be a dictionary')
             self._replace(data)
