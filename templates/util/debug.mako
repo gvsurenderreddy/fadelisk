@@ -23,6 +23,12 @@
     %>
 </%def>
 
+<%def name="active()">
+    <%
+        return bool(site.conf.get('debug'));
+    %>
+</%def>
+
 <%def name="display()">
     <%
         if not site.conf.get('debug'):

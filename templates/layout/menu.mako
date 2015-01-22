@@ -47,6 +47,10 @@
         cls = ""
         if current:
             cls = 'class="current" '
+
+#        context.write('               <a %shref="%s"%s>%s</a>'
+#            % (cls, path, title, label));
+#        return ''
     %>
     <a ${cls}href="${path}"${title}>${label}</a>
 </%def>

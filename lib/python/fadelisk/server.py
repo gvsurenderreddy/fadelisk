@@ -15,7 +15,7 @@ class ServerControlProtocol(basic.LineReceiver):
     def lineReceived(self, line):
         if line.startswith('shutdown'):
             self.transport.loseConnection()
-            reactor.callLater(0.5, reactor.stop)
+            reactor.callLater(0.1, reactor.stop)
 
 class ServerControlFactory(protocol.ServerFactory):
     protocol = ServerControlProtocol

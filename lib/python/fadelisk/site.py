@@ -58,13 +58,9 @@ class Site(object):
             'output_encoding': 'utf-8',
             'encoding_errors': 'replace',
         }
-        self.template_lookup = TemplateLookup(
-            **self.template_lookup_options
-        )
+        self.template_lookup = TemplateLookup(**self.template_lookup_options)
         self.template_lookup_debug_mode = TemplateLookup(
-            filesystem_checks = True,
-            **self.template_lookup_options
-        )
+            filesystem_checks = True, **self.template_lookup_options)
 
     def initialize_cache(self):
         self.cache.clear()
@@ -161,10 +157,7 @@ class ProcessorHTML(resource.Resource):
                 request_data=request_data,
                 cache=self.site.cache,
             )
-            #request.setHeader('Content-Type', 'text/plain')
-            request.setResponseCode(200)
             return request_data.get('payload') or content
-
         except:
             request.setResponseCode(500)
             if self.site.conf.get('debug'):
