@@ -30,6 +30,8 @@
         'extra_local_fonts': [],
         'extra_google_fonts': [],
         'extra_stylesheets': [],
+        'extra_screen_stylesheets': [],
+        'extra_print_stylesheets': [],
         'extra_scripts': [],
         'extra_head_content': [],
     })

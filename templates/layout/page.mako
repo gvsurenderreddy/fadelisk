@@ -5,8 +5,14 @@
     <%
         stylesheets = list(site.conf.get('stylesheets', []))
         stylesheets.extend(request_data.get('extra_stylesheets', []))
-        screen_stylesheets = site.conf.get('screen_stylesheets', [])
-        print_stylesheets = site.conf.get('print_stylesheets', [])
+
+        screen_stylesheets = list(site.conf.get('screen_stylesheets', []))
+        screen_stylesheets.extend(request_data.get(
+            'extra_screen_stylesheets', []))
+
+        print_stylesheets = list(site.conf.get('print_stylesheets', []))
+        print_stylesheets.extend(request_data.get(
+            'extra_print_stylesheets', []))
     %>
     % for stylesheet in stylesheets:
         <link rel="stylesheet" href="${stylesheet}" />
