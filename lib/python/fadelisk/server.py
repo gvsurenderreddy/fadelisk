@@ -87,10 +87,9 @@ class Server(object):
                     print(str(err))
                     continue
 
-                #-- Check if site is online.
-                if not site_conf.get('site_online'):
-                    print(fqdn, "is OFFLINE")
-                    # TODO, possibly: provide offline resource.
+                #-- Check if site is active.
+                if not site_conf.get('site_active'):
+                    print(fqdn, "is INACTIVE")
                     continue
 
                 #-- Add site if not already found...
