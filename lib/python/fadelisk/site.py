@@ -5,6 +5,33 @@ from twisted.web import resource, static
 from mako.lookup import TemplateLookup
 from mako import exceptions
 
+class ResourceSafeDirectory(static.File):
+    def __init__(self, *args, **kwargs):
+        static.File.__init__(self, *args, **kwargs)
+
+    def directoryListing(self):
+        return resource.ForbiddenResource(
+            "You are not allowed to list the contents of this directory.")
+
+# TODO: Needs site_conf to determine which dirs have been marked listable
+# Data should be stored accessibly, perhaps in the registry.
+#
+# class ResourceSafeDirectory(static.File):
+#     def __init__(self, path, defaultType="text/html", ignoredExts=(),
+#                  registry=None, allowExt=0, site_conf={}):
+#         self.site_conf = site_conf
+#         static.File.__init__(self, path)
+#
+#     def directoryListing(self):
+#         for allowed_dir in self.site_conf.get('allow_directory_listing', []):
+#             if self.path == allowed_dir.rstrip('/'):
+#                 return static.DirectoryLister(self.path, self.listNames(),
+#                                               self.contentTypes,
+#                                               self.contentEncodings,
+#                                               self.defaultType)
+#         return resource.ForbiddenResource(
+#             "You are not allowed to list the contents of this directory.")
+
 class Site(object):
     def __init__(self, path, application_conf, site_conf, aliases=[]):
         #-- Save args
@@ -21,8 +48,8 @@ class Site(object):
         self.initialize_cache()
 
         #-- Build resource tree from site directory structure
-        self.resource = static.File(self.rel_path('content'))
-        #self.resource = SneakyStatic(self.rel_path('content'))
+        self.resource = ResourceSafeDirectory(path=self.rel_path('content'))
+
         self.resource.indexNames=['index.html', 'index.htm']
         self.resource.processors = {
             '.html': self.factory_processor_html,
@@ -87,14 +114,6 @@ class Site(object):
     def factory_processor_html(self, request_path, registry):
         return ProcessorHTML(request_path, registry, self)
 
-
-#class SneakyStatic(static.File):
-#    def __init__(self, path, defaultType="text/html", ignoredExts=(),
-#                 registry=None, allowExt=0):
-#        static.File.__init__(self, path, defaultType, ignoredExts,
-#                             registry, allowExt)
-
-
 class ProcessorHTML(resource.Resource):
     isLeaf = True
     allowedMethods = ('GET', 'POST', 'HEAD')
@@ -118,6 +137,7 @@ class ProcessorHTML(resource.Resource):
 
     def __init__(self, path, registry, site):
         resource.Resource.__init__(self)
+        #static.File.__init__(self, path, registry=registry)
         #self.path = path
         #self.registry = registry
         self.site = site
@@ -164,7 +184,6 @@ class ProcessorHTML(resource.Resource):
                 return exceptions.html_error_template().render()
             else:
                 return ProcessorHTML.internal_server_error
-
 
 class ErrorResource(resource.Resource):
     isLeaf = True
