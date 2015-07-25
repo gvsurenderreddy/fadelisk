@@ -5,7 +5,7 @@ import os
 import sys
 import pwd
 from twisted.internet import reactor, protocol, defer
-from twisted.web import server, vhost, static
+from twisted.web import resource, server, vhost, static
 from twisted.protocols import basic
 
 from . import conf
@@ -20,6 +20,12 @@ class ServerControlProtocol(basic.LineReceiver):
 class ServerControlFactory(protocol.ServerFactory):
     protocol = ServerControlProtocol
 
+
+class SiteNotFoundPage(resource.ForbiddenResource):
+    def __init__(self):
+        resource.ErrorPage.__init__(self, resource.FORBIDDEN, "No Such Site",
+                          "Your request does not correspond to a known site.")
+
 class Server(object):
     def __init__(self, conf, args):
         self.args = args
@@ -27,7 +33,8 @@ class Server(object):
         self.sites = []
 
         self.vhost = vhost.NameVirtualHost()
-        self.vhost.default=static.File("/var/www")
+        #self.vhost.default=static.File("/var/www")
+        self.vhost.default=SiteNotFoundPage()
         self.gather_sites()
         self.ubersite = server.Site(self.vhost)
 
