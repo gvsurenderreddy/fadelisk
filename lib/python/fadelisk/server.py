@@ -5,7 +5,7 @@ import os
 import sys
 import pwd
 from twisted.internet import reactor, protocol, defer
-from twisted.web import resource, server, vhost, static
+from twisted.web import http, resource, server, vhost, static
 from twisted.protocols import basic
 
 from . import conf
@@ -23,7 +23,7 @@ class ServerControlFactory(protocol.ServerFactory):
 
 class SiteNotFoundPage(resource.ForbiddenResource):
     def __init__(self):
-        resource.ErrorPage.__init__(self, resource.FORBIDDEN, "No Such Site",
+        resource.ErrorPage.__init__(self, http.FORBIDDEN, "No Such Site",
                           "Your request does not correspond to a known site.")
 
 class Server(object):
