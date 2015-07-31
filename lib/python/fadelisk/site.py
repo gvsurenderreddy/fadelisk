@@ -1,7 +1,8 @@
 
 import sys
 import os
-from twisted.web import resource, static
+from string import Template
+from twisted.web import resource, static, error
 from mako.lookup import TemplateLookup
 from mako import exceptions
 
@@ -12,6 +13,7 @@ class ResourceSafeDirectory(static.File):
     def directoryListing(self):
         return resource.ForbiddenResource(
             "You are not allowed to list the contents of this directory.")
+
 
 # TODO: Needs site_conf to determine which dirs have been marked listable
 # Data should be stored accessibly, perhaps in the registry.
@@ -40,12 +42,13 @@ class Site(object):
         self.conf = site_conf
         self._aliases = list(aliases)
 
-        #-- Extract FQDN from directory base
-        self.fqdn = os.path.basename(self.path)
-
         #-- Initialize Cache
         self.cache = {}
+        self.request_data = {}
         self.initialize_cache()
+
+        #-- Extract FQDN from directory base
+        self.fqdn = os.path.basename(self.path)
 
         #-- Build resource tree from site directory structure
         self.resource = ResourceSafeDirectory(path=self.rel_path('content'))
@@ -61,11 +64,11 @@ class Site(object):
             self.resource.putChild(directory,
                 static.File(self.rel_path(directory)))
 
-        #-- Build Error resource for not-found condition
-        self.error_resource = ErrorResource(self, '/errors/404_not_found.html')
-        #self.error_resource.processors = {'.html':self.factory_processor_html}
-        #self.error_resource.childNotFound = resource.NoResource("NO RESOURCE")
-        self.resource.childNotFound = self.error_resource
+        #-- Build Error resources
+        self.not_found_resource = NotFoundResource(self)
+        self.resource.childNotFound = self.not_found_resource
+
+        self.internal_server_error_resource = InternalServerErrorResource(self)
 
         #-- Build list of directories to use for template resolution
         self.template_lookup_directories = [
@@ -78,16 +81,18 @@ class Site(object):
         )
 
         #-- Create the template resolvers
-        self.template_lookup_options = {
+        template_lookup_options = {
             'directories': self.template_lookup_directories,
             'module_directory': self.rel_path('tmp/mako-module'),
             'input_encoding': 'utf-8',
             'output_encoding': 'utf-8',
             'encoding_errors': 'replace',
         }
-        self.template_lookup = TemplateLookup(**self.template_lookup_options)
-        self.template_lookup_debug_mode = TemplateLookup(
-            filesystem_checks = True, **self.template_lookup_options)
+        self.template_lookups = (
+            TemplateLookup(filesystem_checks=True,      # static_mode: 0
+                           **template_lookup_options),
+            TemplateLookup(**template_lookup_options)   # static_mode: 1
+        )
 
     def initialize_cache(self):
         self.cache.clear()
@@ -99,6 +104,10 @@ class Site(object):
                 'data': {},
             }
         )
+
+    def get_template_lookup(self):
+        static_mode = 1 if self.conf.get('static_mode') else 0
+        return self.template_lookups[static_mode]
 
     def get_aliases(self):
         return self._aliases
@@ -114,38 +123,18 @@ class Site(object):
     def factory_processor_html(self, request_path, registry):
         return ProcessorHTML(request_path, registry, self)
 
+
 class ProcessorHTML(resource.Resource):
     isLeaf = True
     allowedMethods = ('GET', 'POST', 'HEAD')
-    internal_server_error = """
-        <!doctype html>
-        <html lang="en">
-            <head>
-                <meta charset="utf-8">
-                <link rel="icon" href="/images/favicon.png" type="image/png">
-                <title>Internal Server Error</title>
-            </head>
-            <body>
-                <h1>Internal Server Error</h1>
-                <p>
-                    The web server has encountered an internal server error
-                    and is unable to fulfill your request
-                </p>
-            </body>
-        </html>
-    """
 
     def __init__(self, path, registry, site):
         resource.Resource.__init__(self)
-        #static.File.__init__(self, path, registry=registry)
         #self.path = path
         #self.registry = registry
         self.site = site
 
-    #-- By default, twisted calls render_GET for HEAD requests
-    #def render_HEAD(self, request):
-    #    return self.render_request(request)
-
+    #-- By default, twisted also calls render_GET for HEAD requests
     def render_GET(self, request):
         return self.render_request(request)
 
@@ -160,55 +149,89 @@ class ProcessorHTML(resource.Resource):
             path += 'index.html'
 
         # Clear data before request
-        request_data = {}                       # every time, new ref
+        self.site.request_data.clear()          # every time, new ref
         if self.site.conf.get('debug'):
             self.site.initialize_cache()        # only in debug, preserve ref
 
         # Render the template
         try:
-            if self.site.conf.get('debug'):
-                template_lookup = self.site.template_lookup_debug_mode
-            else:
-                template_lookup = self.site.template_lookup
-            template = template_lookup.get_template(path)
-            content = template.render(
-                site=self.site,
-                request=request,
-                request_data=request_data,
-                cache=self.site.cache,
-            )
-            return request_data.get('payload') or content
+            template = self.site.get_template_lookup().get_template(path)
+            content = template.render(site=self.site, request=request,
+                                      request_data=self.site.request_data,
+                                      cache=self.site.cache)
         except:
             request.setResponseCode(500)
             if self.site.conf.get('debug'):
                 return exceptions.html_error_template().render()
             else:
-                return ProcessorHTML.internal_server_error
+                return self.site.internal_server_error_resource.render(request)
+
+        return self.site.request_data.get('payload') or content
+
 
 class ErrorResource(resource.Resource):
     isLeaf = True
 
-    def __init__(self, site, path):
+    def __init__(self, site, path, response_code, fallback_title,
+                 fallback_message):
         resource.Resource.__init__(self)
         self.site = site
         self.path = path
-        if self.path.endswith('/'):
-            self.path += 'index.html'
+        self.response_code = response_code
 
-    def render_GET(self, request):
+        self.error_content = ErrorPageContent(fallback_title, fallback_message)
+
+    def render(self, request):
         request.setHeader('server', self.site.application_conf['server'])
-        request.setResponseCode(404)
+        request.setResponseCode(self.response_code)
 
-        if self.site.conf.get('debug'):
-            template_lookup = self.site.template_lookup_debug_mode
-        else:
-            template_lookup = self.site.template_lookup
-        template = template_lookup.get_template(self.path)
-        return template.render(
-            site=self.site,
-            request=request,
-            request_data={},
-            cache=self.site.cache,
-        )
+        try:
+            template = self.site.get_template_lookup().get_template(self.path)
+            return template.render(site=self.site, request=request,
+                                   request_data=self.site.request_data,
+                                   cache=self.site.cache)
+        except:
+            return self.error_content.get()
 
+
+class InternalServerErrorResource(ErrorResource):
+    def __init__(self, site):
+        ErrorResource.__init__(self, site,
+                               '/errors/500_internal_server_error.html',
+                               500, 'Internal Server Error',
+                              'The server could not fulfill your request.')
+
+
+class NotFoundResource(ErrorResource):
+    def __init__(self, site):
+        ErrorResource.__init__(self, site, '/errors/404_not_found.html',
+                               404, 'Document Not Found',
+                              'The document you requested could not be found.')
+
+
+class ErrorPageContent(object):
+    content= """
+    <!DOCTYPE html>
+    <html lang="en" class="error-page">
+        <head>
+            <meta charset="utf-8">
+            <link rel="icon" href="/images/favicon.png" type="image/png">
+            <title>$title</title>
+        </head>
+        <body>
+            <h1>$title</h1>
+            $message
+        </body>
+    </html>
+    """
+
+    def __init__(self, title, message):
+        self.title = title
+        self.message = message
+
+        template = Template(self.content)
+        self.document = template.safe_substitute(title=title, message=message)
+
+    def get(self):
+        return self.document
 
