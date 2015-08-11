@@ -1,4 +1,13 @@
 
+##:::( Document ):::::::::::::::::::::::::::::::::::::::::::::::::::::::::::##
+
+<%def name="html5_document()">
+    <!DOCTYPE html>
+    <html lang="en">
+        ${caller.body()}
+    </html>
+</%def>
+
 ##:::( Document Head )::::::::::::::::::::::::::::::::::::::::::::::::::::::##
 
 <%def name="stylesheets()">
@@ -31,7 +40,7 @@
         scripts.extend(request_data.get('extra_scripts', []))
     %>
     % for script in scripts:
-            <script src="${script}"></script>
+        <script src="${script}"></script>
     % endfor
 </%def>
 
@@ -79,4 +88,4 @@
     %>
 </%def>
 
-
+## vim:ft=mako
