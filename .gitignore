@@ -1,3 +1,1 @@
-site/etc/ssl/*
-site/tmp/*
 *.py[co]
