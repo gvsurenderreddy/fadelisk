@@ -3,6 +3,7 @@ from __future__ import print_function
 
 import os
 import sys
+import pwd
 from optparse import OptionParser
 
 from twisted.internet import pollreactor
@@ -10,9 +11,10 @@ pollreactor.install()
 
 from . import conf
 from . import server
-from . import client
+from . import lockfile
+from . import daemon
 
-class Application(object):
+class Application(daemon.Daemon):
     # If no configuration file is specified on the command line, this built-in
     # list of locations is searched. Some values are computed later based on
     # the relative location of the executable, i.e., argv[0].
@@ -42,17 +44,41 @@ class Application(object):
     }
 
     def __init__(self):
+        daemon.Daemon.__init__(self, stderr=None)
         self.parse_args()
         self.load_conf()
+
+    def run(self):
         self.dispatch()
 
+    def start(self):
+        self.daemonize()
+
+        #-- Lockfile in new process
+        lock = lockfile.Lockfile("fadelisk")
+        lock.acquire()
+        lock.chown_lockfile(self.conf['process_user'])
+
+        #-- Build reactor
+        self.server = server.Server(self.conf, self.args)
+
+        #-- Open logs
+
+        #-- Relinquish privileges
+        self.chuser(self.conf['process_user'])
+
+        #-- Start the reactor
+        self.server.run()
+
+        lock.release()
+
+    def stop(self):
+        lock = lockfile.Lockfile("fadelisk")
+        lock.kill_process()
+
     def load_conf(self):
-        #-- Update default configuration with some dependent options
+        #-- Bootstrap configuration values
         default_conf = conf.ConfDict(Application.default_conf)
-        default_conf.soft_update({
-            'control_port': default_conf['listen_port']+1,
-            'control_address': default_conf['bind_address']
-        })
 
         #-- If a configuration file was specified on the command line, load it.
         if self.options.conf_file:
@@ -97,13 +123,13 @@ class Application(object):
                               )
         (self.options, self.args) = self.parser.parse_args()
 
-    def command_not_implemented(self, conf, args):
-        print('Command "%s" is not implemented yet.' % args[0])
+    def command_not_implemented(self):
+        print('Command "%s" is not implemented yet.' % self.args[0])
 
     def build_dispatch_table(self):
         self.dispatch_table = {
-            'start':    server.start,
-            'stop':     client.start,
+            'start':    self.start,
+            'stop':     self.stop,
             'client':   self.command_not_implemented,
             'command':  self.command_not_implemented,
         }
@@ -118,9 +144,9 @@ class Application(object):
         execute = None
         try:
             execute = self.dispatch_table[command]
+            execute()
         except KeyError:
             print(Application.usage)
             sys.exit(1)
 
-        execute(self.conf, self.args)
 

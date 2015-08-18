@@ -2,5 +2,7 @@
 from . import application
 from . import constants
 
-begins = application.Application        # so apps can have "fadelisk.begins()"
+def begins():                       # so apps can have "fadelisk.begins()"
+    app = application.Application()
+    app.run()
 
