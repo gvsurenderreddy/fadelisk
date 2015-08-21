@@ -73,20 +73,20 @@ class Lockfile(object):
         self.remove_lockfile()
 
     def kill_process(self):
-        lockfile = open(self.filename, "rw")
+        with open(self.filename, "r") as lockfile:
 
-        #-- Get locking process
-        flock_t = struct.pack('hhqqh', fcntl.F_WRLCK, 0, 0, 0, 0)
-        lock = fcntl.fcntl(lockfile, fcntl.F_GETLK, flock_t)
-        type_, whence, start, len_, pid = struct.unpack('hhqqh', lock)
+            #-- Get locking process
+            flock_t = struct.pack('hhqqh', fcntl.F_WRLCK, 0, 0, 0, 0)
+            lock = fcntl.fcntl(lockfile, fcntl.F_GETLK, flock_t)
+            type_, whence, start, len_, pid = struct.unpack('hhqqh', lock)
 
-        if not pid:
-            remove_lockfile()
-            raise LockfileError("Lockfile: stale lockfile")
+            if not pid:
+                remove_lockfile()
+                raise LockfileError("Lockfile: stale lockfile")
 
-        if pid == os.getpid():
-            raise RuntimeError("Lockfile: would terminate own process")
+            if pid == os.getpid():
+                raise RuntimeError("Lockfile: would terminate own process")
 
-        os.kill(pid, signal.SIGTERM)
-        sys.exit(0)
+            os.kill(pid, signal.SIGTERM)
+            sys.exit(0)
 

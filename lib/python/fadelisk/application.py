@@ -13,6 +13,7 @@ from . import conf
 from . import server
 from . import lockfile
 from . import daemon
+from . import logger
 
 class Application(daemon.Daemon):
     # If no configuration file is specified on the command line, this built-in
@@ -35,6 +36,7 @@ class Application(daemon.Daemon):
     # are computed and added last, if necessary.
     default_conf = {
         'verbose': False,
+        'log_level': 'warning',
         'server': 'fadelisk 1.0 (barndt)',
         'listen_port': 1066,
         'bind_address': '127.0.0.1',
@@ -45,8 +47,12 @@ class Application(daemon.Daemon):
 
     def __init__(self):
         daemon.Daemon.__init__(self, stderr=None)
+        self.log = logger.Logger()
+        self.log.set_level("warning")
+        self.log.stderr_on()
         self.parse_args()
         self.load_conf()
+        self.log.set_level(self.conf['log_level'])
 
     def run(self):
         self.dispatch()
@@ -54,27 +60,24 @@ class Application(daemon.Daemon):
     def start(self):
         self.daemonize()
 
-        #-- Lockfile in new process
         lock = lockfile.Lockfile("fadelisk")
         lock.acquire()
         lock.chown_lockfile(self.conf['process_user'])
 
-        #-- Build reactor
-        self.server = server.Server(self.conf, self.args)
-
-        #-- Open logs
-
-        #-- Relinquish privileges
-        self.chuser(self.conf['process_user'])
-
-        #-- Start the reactor
-        self.server.run()
+        self.server = server.Server(self.conf, self.args)   # build reactor
+        self.chuser(self.conf['process_user'])              # relinquish root
+        self.log.stderr_off()                               # quiet after init
+        self.server.run()                                   # run() blocks here
 
         lock.release()
 
     def stop(self):
         lock = lockfile.Lockfile("fadelisk")
-        lock.kill_process()
+        try:
+            lock.kill_process()
+        except IOError:
+            self.log.error("No lockfile present")
+            sys.exit(1)
 
     def load_conf(self):
         #-- Bootstrap configuration values
@@ -109,7 +112,7 @@ class Application(daemon.Daemon):
                                    optparse=self.options.__dict__)
 
     def parse_args(self):
-        usage = 'usage: %prog [options] start | stop | client | command'
+        usage = 'usage: %prog [options] start | stop'
         version = '%prog 1.0 (barndt)'
         self.parser = OptionParser(usage=usage, version=version)
         self.parser.add_option("-c", "--conf",
@@ -130,8 +133,7 @@ class Application(daemon.Daemon):
         self.dispatch_table = {
             'start':    self.start,
             'stop':     self.stop,
-            'client':   self.command_not_implemented,
-            'command':  self.command_not_implemented,
+            'restart':  self.command_not_implemented,
         }
 
     def dispatch(self):
