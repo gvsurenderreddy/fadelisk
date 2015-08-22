@@ -63,10 +63,10 @@ class Application(daemon.Daemon):
         lock.acquire()
         lock.chown_lockfile(self.conf['process_user'])
 
-        self.server = server.Server(self.conf, self.args)   # build reactor
-        self.chuser(self.conf['process_user'])              # relinquish root
-        self.log.stderr_off()                               # quiet after init
-        self.server.run()                                   # run() blocks here
+        self.server = server.Server(self.conf)  # build reactor
+        self.chuser(self.conf['process_user'])  # relinquish root
+        self.log.stderr_off()                   # quiet after init
+        self.server.run()                       # run() blocks here
 
         lock.release()
 
@@ -108,7 +108,7 @@ class Application(daemon.Daemon):
 
         # Build the stack of configurations.
         self.conf = conf.ConfStack([application_conf, default_conf],
-                                  optparse=vars(self.args))
+                                  options=vars(self.args))
     def parse_args(self):
         pass
 

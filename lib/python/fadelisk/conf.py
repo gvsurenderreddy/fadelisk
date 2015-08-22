@@ -178,17 +178,18 @@ class ConfFileContents(object):
 
 
 class ConfStack(object):
-    def __init__(self, stack, optparse={}):
+    def __init__(self, stack, options={}):
         self.stack = stack
-        self.optparse = optparse
+        self.options = options
 
     def __getitem__(self, key):
-        # Optparse must be handled specially because keys appear even if
-        # a given option hasn't been specified on the command line. Check
-        # for None instead of looking for the presence of a key.
+        # Values from argparse/optparse must be handled specially because
+        # keys appear even if a given option hasn't been specified on the
+        # command line. Check for None instead of looking for the presence
+        # of a key.
         try:
-            if self.optparse[key] != None:
-                return self.optparse[key]
+            if self.options[key] != None:
+                return self.options[key]
         except KeyError:
             pass
 

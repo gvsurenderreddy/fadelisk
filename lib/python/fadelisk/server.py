@@ -18,9 +18,8 @@ class SiteNotFoundPage(resource.ForbiddenResource):
                           "Your request does not correspond to a known site.")
 
 class Server(object):
-    def __init__(self, conf, args):
-        self.args = args
-        self.conf = conf
+    def __init__(self, application_conf):
+        self.application_conf = application_conf
         self.sites = []
 
         self.vhost = vhost.NameVirtualHost()
@@ -28,8 +27,8 @@ class Server(object):
         self.gather_sites()
         self.ubersite = server.Site(self.vhost)
 
-        reactor.listenTCP(self.conf['listen_port'], self.ubersite,
-                          interface=self.conf['bind_address'])
+        reactor.listenTCP(self.application_conf['listen_port'], self.ubersite,
+                          interface=self.application_conf['bind_address'])
 
     def run(self):
         signal.signal(signal.SIGTERM, self.stop)
@@ -40,7 +39,7 @@ class Server(object):
         reactor.stop()
 
     def gather_sites(self):
-        for collection in self.conf['site_collections']:
+        for collection in self.application_conf['site_collections']:
             if not os.path.exists(collection):
                 continue
             for fqdn in os.listdir(collection):
@@ -68,7 +67,8 @@ class Server(object):
 
                 #-- Add site if not already found...
                 if fqdn in [s.fqdn for s in self.sites]:
-                    print('- Skipping site', fqdn, 'which was already present.')
+                    print('- Skipping site', fqdn,
+                          'which was already present.')
                     continue
                 # ...and not listed as an alias for another site.
                 for site_ in self.sites:
@@ -77,7 +77,8 @@ class Server(object):
                               site_.fqdn)
                         break
                 else:
-                    this_site = site.Site(site_path, self.conf, site_conf)
+                    this_site = site.Site(site_path, self.application_conf,
+                                          site_conf)
                     self.vhost.addHost(fqdn, this_site.resource)
                     self.sites.append(this_site)
                     print(fqdn)
