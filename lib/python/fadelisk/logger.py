@@ -22,7 +22,7 @@ class Logger(object):
                                          logoption=self.logoption)
 
     def log(self, priority, message):
-        syslog.syslog(priority, message)
+        syslog.syslog(priority, str(message))
 
     def error(self, message):
         self.log(syslog.LOG_ERR, message)
