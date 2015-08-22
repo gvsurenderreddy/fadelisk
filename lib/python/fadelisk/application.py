@@ -4,7 +4,7 @@ from __future__ import print_function
 import os
 import sys
 import pwd
-from optparse import OptionParser
+import argparse
 
 from twisted.internet import pollreactor
 pollreactor.install()
@@ -23,13 +23,12 @@ class Application(daemon.Daemon):
     conf_file_locations = [
         '/etc/fadelisk',        # Ubuntu, Debian, Linux Mint, Knoppix
         '/etc',                 # Red Hat, SuSE
-        '/srv/www/etc',         # FHS Service-centric location 
+        '/srv/www/etc',         # FHS Service-centric location
         # These values are interpolated at runtime.
         '@PARENT@/etc/fadelisk',# Self-contained
         '@PARENT@',             # Distribution?
     ]
     conf_file_name = 'fadelisk.yaml'
-    usage = 'usage: fadelisk [options] start | stop | client | command'
 
     # Options are later combined from the configuration file and command line
     # parameters. In addition, parameters that depend on other parameters
@@ -48,7 +47,7 @@ class Application(daemon.Daemon):
     def __init__(self):
         daemon.Daemon.__init__(self, stderr=None)
         self.log = logger.Logger()
-        self.log.set_level("warning")
+        self.log.set_level("info")
         self.log.stderr_on()
         self.parse_args()
         self.load_conf()
@@ -84,8 +83,8 @@ class Application(daemon.Daemon):
         default_conf = conf.ConfDict(Application.default_conf)
 
         #-- If a configuration file was specified on the command line, load it.
-        if self.options.conf_file:
-            application_conf = conf.ConfYAML(self.options.conf_file,
+        if self.args.conf_file:
+            application_conf = conf.ConfYAML(self.args.conf_file,
                                       ignore_changes=True)
         else:
             #-- Otherwise, let the hunter try to find it.
@@ -109,22 +108,21 @@ class Application(daemon.Daemon):
 
         # Build the stack of configurations.
         self.conf = conf.ConfStack([application_conf, default_conf],
-                                   optparse=self.options.__dict__)
-
+                                  optparse=vars(self.args))
     def parse_args(self):
-        usage = 'usage: %prog [options] start | stop'
-        version = '%prog 1.0 (barndt)'
-        self.parser = OptionParser(usage=usage, version=version)
-        self.parser.add_option("-c", "--conf",
-                               help="configuration file",
-                               action="store",
-                               dest="conf_file")
-        self.parser.add_option("-v", "--verbose",
-                               help="display more detailed information",
-                               action="store_true",
-                               dest="verbose",
-                              )
-        (self.options, self.args) = self.parser.parse_args()
+        pass
+
+        self.parser = argparse.ArgumentParser(
+            prog='fadelisk',
+            usage='%(prog)s [options] start | stop',
+            description='A web server where all pages are templates.',
+        )
+        self.parser.add_argument('-c', '--config', dest="conf_file",
+                                 help='specify a configuration file')
+        self.parser.add_argument('-l', '--loglevel',
+                                 help='log at: error, warning, info, debug')
+        self.parser.add_argument('action', nargs=1, type=str)
+        self.args = self.parser.parse_args()
 
     def command_not_implemented(self):
         print('Command "%s" is not implemented yet.' % self.args[0])
@@ -140,7 +138,7 @@ class Application(daemon.Daemon):
         if not self.args:
             print(Application.usage)
             sys.exit(1)
-        command = self.args[0]
+        command = self.args.action[0]
 
         self.build_dispatch_table()
         execute = None
