@@ -63,7 +63,7 @@ class Daemon(object):
                 max_fd = 1024
             os.closerange(0, max_fd)
 
-        with open('/dev/null', 'r') as stdin:
+        with open(self.stdin, 'r') as stdin:
             os.dup2(stdin.fileno(), sys.stdin.fileno())
             os.dup2(stdin.fileno(), sys.__stdin__.fileno())
 
