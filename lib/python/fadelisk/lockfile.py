@@ -81,7 +81,7 @@ class Lockfile(object):
             type_, whence, start, len_, pid = struct.unpack('hhqqh', lock)
 
             if not pid:
-                remove_lockfile()
+                self.remove_lockfile()
                 raise LockfileError("Lockfile: stale lockfile")
 
             if pid == os.getpid():
