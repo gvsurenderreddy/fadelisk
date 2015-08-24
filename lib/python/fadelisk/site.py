@@ -90,11 +90,7 @@ class Site(object):
             'output_encoding': 'utf-8',
             'encoding_errors': 'replace',
         }
-        self.template_lookups = (
-            TemplateLookup(filesystem_checks=True,      # static_mode: 0
-                           **template_lookup_options),
-            TemplateLookup(**template_lookup_options)   # static_mode: 1
-        )
+        self.template_lookup = TemplateLookup(**template_lookup_options)
 
     def initialize_cache(self):
         self.cache.clear()
@@ -106,10 +102,6 @@ class Site(object):
                 'data': {},
             }
         )
-
-    def get_template_lookup(self):
-        static_mode = 1 if self.conf.get('static_mode') else 0
-        return self.template_lookups[static_mode]
 
     def get_aliases(self):
         return self._aliases
@@ -157,7 +149,7 @@ class ProcessorHTML(resource.Resource):
 
         # Render the template
         try:
-            template = self.site.get_template_lookup().get_template(path)
+            template = self.site.template_lookup.get_template(path)
             content = template.render(site=self.site, request=request,
                                       request_data=self.site.request_data,
                                       cache=self.site.cache)
