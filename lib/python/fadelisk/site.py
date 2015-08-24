@@ -83,7 +83,9 @@ class Site(object):
         #-- Create the template resolvers
         template_lookup_options = {
             'directories': self.template_lookup_directories,
-            'module_directory': self.rel_path('tmp/mako-module'),
+            'cache_type': 'memory',
+            #'cache_type': 'file',
+            #'module_directory': self.rel_path('tmp/mako-module'),
             'input_encoding': 'utf-8',
             'output_encoding': 'utf-8',
             'encoding_errors': 'replace',
