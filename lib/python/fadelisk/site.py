@@ -14,7 +14,6 @@ class ResourceSafeDirectory(static.File):
         return resource.ForbiddenResource(
             "You are not allowed to list the contents of this directory.")
 
-
 # TODO: Needs site_conf to determine which dirs have been marked listable
 # Data should be stored accessibly, perhaps in the registry.
 #
@@ -142,8 +141,38 @@ class ProcessorHTML(resource.Resource):
         if path.endswith('/'):
             path += 'index.html'
 
-        # Clear data before request
-        self.site.request_data.clear()          # every time, new ref
+        # Clear data before request (preserve ref)
+        self.site.request_data.clear()
+        self.site.request_data.update({
+            #-- For delivering media of other types, like image/png. Just
+            #   pack up your data payload and request.setHeader your
+            #   content type.
+            'payload': None,
+
+            #-- Forms require unique field IDs. This will be incremented by
+            #   templates which lay out input elements.
+            'unique_field_id': 0,
+
+            #-- Flags: Entries in this dictionary can be used to arbitrarily
+            #   alter rendering behavior in site templates.
+            'flag': {},
+
+            #-- Debug messages: Strings added to this list may be formatted
+            #   later to ask as informational output during development.
+            'debug': [],
+
+            #-- Extra Content: These can be used by a top-level site layout
+            #   template to allow inheriting pages to add additional content.
+            #   To use these, your top-level template must capture next.body
+            #   before emitting the document head.
+            'extra_local_fonts': [],
+            'extra_google_fonts': [],
+            'extra_stylesheets': [],
+            'extra_screen_stylesheets': [],
+            'extra_print_stylesheets': [],
+            'extra_scripts': [],
+            'extra_head_content': [],
+        })
         if self.site.conf.get('debug'):
             self.site.initialize_cache()        # only in debug, preserve ref
 
