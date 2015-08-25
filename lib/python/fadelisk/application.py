@@ -42,7 +42,7 @@ class Application(daemon.Daemon):
     def __init__(self):
         daemon.Daemon.__init__(self, stderr=None)
         self.log = logger.Logger()
-        self.log.set_level("info")
+        self.log.set_level("warning")
         self.log.stderr_on()
         self.parse_args()
         self.load_conf()
