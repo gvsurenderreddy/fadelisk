@@ -17,7 +17,7 @@ class ErrorResource(resource.Resource):
         self.error_content = ErrorPageContent(fallback_title, fallback_message)
 
     def render(self, request):
-        request.setHeader('server', self.site.application_conf['server'])
+        request.setHeader('server', self.site.app.conf['server'])
         request.setResponseCode(self.response_code)
 
         try:

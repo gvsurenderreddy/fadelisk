@@ -1,13 +1,8 @@
 
-from __future__ import print_function
-
 import os
 import sys
 import pwd
 import argparse
-
-from twisted.internet import pollreactor
-pollreactor.install()
 
 from . import conf
 from . import server
@@ -63,7 +58,7 @@ class Application(daemon.Daemon):
         lock.acquire()
         lock.chown_lockfile(self.conf['process_user'])
 
-        self.server = server.Server(self.conf)  # build reactor
+        self.server = server.Server(self)       # build reactor
         self.chuser(self.conf['process_user'])  # relinquish root
         self.log.stderr_off()                   # quiet after init
         self.server.run()                       # run() blocks here
@@ -119,13 +114,14 @@ class Application(daemon.Daemon):
         )
         self.parser.add_argument('-c', '--config', dest="conf_file",
                                  help='specify a configuration file')
-        self.parser.add_argument('-l', '--loglevel',
+        self.parser.add_argument('-l', '--loglevel', dest="log_level",
                                  help='log at: error, warning, info, debug')
         self.parser.add_argument('action', nargs=1, type=str)
         self.args = self.parser.parse_args()
 
     def command_not_implemented(self):
-        print('Command "%s" is not implemented yet.' % self.args[0])
+        self.log.error('Command "%s" is not implemented yet.' %
+                       self.args.action[0])
 
     def build_dispatch_table(self):
         self.dispatch_table = {
@@ -136,7 +132,7 @@ class Application(daemon.Daemon):
 
     def dispatch(self):
         if not self.args:
-            print(Application.usage)
+            self.parser.print_help(file=sys.stderr)
             sys.exit(1)
         command = self.args.action[0]
 
@@ -146,7 +142,7 @@ class Application(daemon.Daemon):
             execute = self.dispatch_table[command]
             execute()
         except KeyError:
-            print(Application.usage)
+            self.parser.print_help(file=sys.stderr)
             sys.exit(1)
 
 

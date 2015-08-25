@@ -19,7 +19,7 @@ class HTMLProcessor(resource.Resource):
         return self.render_request(request)
 
     def render_request(self, request):
-        request.setHeader('server', self.site.application_conf['server'])
+        request.setHeader('server', self.site.app.conf['server'])
 
         path = request.path
         if path.endswith('/'):
@@ -66,7 +66,8 @@ class HTMLProcessor(resource.Resource):
             content = template.render(site=self.site, request=request,
                                       request_data=self.site.request_data,
                                       cache=self.site.cache)
-        except:
+        except Exception as exc:
+            self.site.app.log.error(exc)
             request.setResponseCode(500)
             if self.site.conf.get('debug'):
                 return exceptions.html_error_template().render()

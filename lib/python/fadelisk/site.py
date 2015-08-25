@@ -10,9 +10,9 @@ from .error_resource import ErrorResource, InternalServerErrorResource
 from .error_resource import NotFoundResource
 
 class Site(object):
-    def __init__(self, path, application_conf, site_conf, aliases=[]):
+    def __init__(self, path, site_conf, app, aliases=[]):
         self.path = path
-        self.application_conf = application_conf
+        self.app = app
         self.conf = site_conf
         self._aliases = list(aliases)
 
@@ -51,7 +51,7 @@ class Site(object):
             self.rel_path('template'),
         ]
         self.template_lookup_directories.extend(
-            self.application_conf.get('template_directories', [])
+            self.app.conf.get('template_directories', [])
         )
 
         #-- Create the template resolvers
