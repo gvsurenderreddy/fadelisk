@@ -1,4 +1,5 @@
 
+import os
 import sys
 import syslog
 
@@ -11,15 +12,14 @@ class Logger(object):
         self.ident = ident
         self.facility = facility
         self.logoption = logoption
+
+        if self.ident == None:
+            self.ident = os.path.basename(sys.argv[0])
         self.openlog()
 
     def openlog(self):
-        if self.ident:
             self.syslog = syslog.openlog(self.ident, self.facility,
                                          self.logoption)
-        else:
-            self.syslog = syslog.openlog(facility=self.facility,
-                                         logoption=self.logoption)
 
     def log(self, priority, message):
         syslog.syslog(priority, str(message))
