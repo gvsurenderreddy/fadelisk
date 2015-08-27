@@ -7,15 +7,8 @@ import yaml
 import json
 import threading
 
-class ConfNotFoundError(Exception):
-    def __init__(self, *args):
-        Exception.__init__(self, *args)
-
-
-class ConfFormatError(Exception):
-    def __init__(self, *args):
-        Exception.__init__(self, *args)
-
+class ConfNotFoundError(Exception): pass
+class ConfFormatError(Exception): pass
 
 class ConfDict(dict):
     def __init__(self, *args, **kwargs):
