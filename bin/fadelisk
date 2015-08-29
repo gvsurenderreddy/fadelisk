@@ -39,5 +39,6 @@ def launch_application():
     import fadelisk
     fadelisk.begins()
 
-launch_application()
+if __name__ == '__main__':
+    launch_application()
 
