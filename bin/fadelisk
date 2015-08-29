@@ -1,10 +1,14 @@
 #!/usr/bin/python -OO
 
-"""
-Fadelisk application launcher script
+"""Application runner
 
 Adds library paths, imports packages, then instantiates and runs
-the Fadelisk application.
+the application. Assumptions:
+
+    * The package has the same name as the basename of this script,
+    * that the package has either an Application class, or a
+      application.Application class, and that
+    * the Application class has a run() member function.
 """
 
 from __future__ import print_function
@@ -12,33 +16,77 @@ import sys
 from os.path import basename, dirname, exists, join, realpath
 # sys.dont_write_bytecode = True
 
+class ApplicationNotFoundError(Exception): pass
+"""Exception for when Application class can't be found in imported packages"""
+
 def error(message):
-    """Print error message prefixed with the basename of the running script"""
+    """Print error message prefixed with the basename of the running script
+
+    Args:
+        message (str): String to output
+    """
     print('%s: %s' % (basename(__file__), message), file=sys.stderr)
 
 def prepend_path(path):
-    """Prepend a directory to the system path"""
+    """Prepend a directory to the system path
+
+    Args:
+        path (str): The path to prepend to sys.path
+    """
     if not exists(path):
         error("skipping addition of nonexistent path %s" % path)
         return
     sys.path.insert(0, path)
 
 def realjoin(*args):
-    """Join directory path parts and resolve them to their real path"""
+    """Join directory path parts and resolve them to their real path
+
+    Args:
+        *args: Directory parts to assemble
+    """
     return realpath(join(*args))
 
 def add_relative_libs(*args):
-    """Add a path relative to the parent directory of launcher"""
+    """Add a path relative to the parent directory of script
+
+    Args:
+        *args: Directory parts, relative to script parent, to assemble
+    """
     script = realpath(__file__)                     # get full, absolute path
     script_parent = realjoin(dirname(script), '..') # find parent directory
     prepend_path(realjoin(script_parent, *args))    # add relative path
 
-def launch_application():
-    """Add relative paths, import packages, and launch the application"""
+def get_application():
+    """Import the package and search for the Application class
+
+    Import the package/module, and search for Application or
+    application.Application
+
+    Raises:
+        ApplicationNotFoundError: Application class could not be found
+    """
+    name = basename(__file__)
+    __import__(name)
+    namespace = sys.modules[name]
+
+    if hasattr(namespace, 'Application'):
+        return namespace.Application()
+
+    if hasattr(namespace, 'application') and hasattr(namespace.application,
+                                                     'Application'):
+            return namespace.application.Application()
+
+    raise ApplicationNotFoundError('Need Application() or '
+                                   'application.Application() in package %s' %
+                                   name)
+
+def run_application():
+    """Add relative paths, fetch application class, and run application"""
     add_relative_libs('lib', 'python')
-    import fadelisk
-    fadelisk.begins()
+    add_relative_libs('lib')
+
+    get_application().run()
 
 if __name__ == '__main__':
-    launch_application()
+    run_application()
 
