@@ -1,24 +1,34 @@
 #!/usr/bin/python -OO
 
+"""
+Fadelisk application launcher script
+
+Adds library paths, imports packages, then instantiates and runs
+the Fadelisk application.
+"""
+
 import sys
-import os
 from os.path import realpath, dirname, join
+# sys.dont_write_bytecode = True
 
-script = sys.argv[0]
-
-def add_path(path):
+def prepend_path(path):
+    """Prepend a directory to the system path"""
     sys.path.insert(0, path)
 
-add_path("/srv/project/fadelisk/lib/python")            # add project path
+def realjoin(*args):
+    """Join directory path parts and resolve them to their real path"""
+    return realpath(join(*args))
 
-if script and script != '-':                            # if script not piped
-    def realjoin(*args):
-        return realpath(join(*args))
-    script_dir = realpath(dirname(script))
-    script_parent = realjoin(script_dir, '..')
-    add_path(realjoin(script_parent, 'lib', 'python'))  # ...add relative path 
+def add_relative_libs(*args):
+    """Add a path relative to the parent directory of scripts directory"""
+    script = sys.argv[0]
+    if not script or script == '-':                 # script invoked in pipeline
+        return
+    script = realpath(script)                       # get full, absolute path
+    script_parent = realjoin(dirname(script), '..') # find parent directory
+    prepend_path(realjoin(script_parent, *args))    # add relative path
 
-#sys.dont_write_bytecode = True
+add_relative_libs('lib', 'python')
 import fadelisk
 
 fadelisk.begins()
