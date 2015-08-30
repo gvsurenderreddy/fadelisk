@@ -9,6 +9,7 @@ import threading
 
 class ConfNotFoundError(Exception): pass
 class ConfFormatError(Exception): pass
+class ConfUpdateError(Exception): pass
 
 class ConfDict(dict):
     def __init__(self, *args, **kwargs):
@@ -33,7 +34,7 @@ class ConfDynamicDict(ConfDict):
     def abort_if_dynamic(self):
         if self.ignore_changes:
             return
-        raise RuntimeError('Attempted to alter a dynamic configuration')
+        raise ConfUpdateError('Attempted to alter a dynamic configuration')
 
     def __setitem__(self, key, value):
         self.abort_if_dynamic()
@@ -61,7 +62,7 @@ class ConfDynamicDict(ConfDict):
 
 class ConfYAML(ConfDynamicDict):
     def __init__(self, filename, ignore_changes=False):
-        ConfDynamicDict.__init__(self, ignore_changes)
+        ConfDynamicDict.__init__(self, ignore_changes=ignore_changes)
         self.filename = filename
 
         self.timestamp = None
