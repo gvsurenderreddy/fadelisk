@@ -12,7 +12,7 @@ from twisted.web import http, resource, server, vhost
 from . import conf
 from . import site
 
-class SiteNotFoundPage(resource.ForbiddenResource):
+class SiteNotFoundPage(resource.ErrorPage):
     def __init__(self):
         resource.ErrorPage.__init__(self, http.FORBIDDEN, "No Such Site",
                           "Your request does not correspond to a known site.")
