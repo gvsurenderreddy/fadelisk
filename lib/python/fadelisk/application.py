@@ -1,88 +1,96 @@
 
 import os
 import sys
-import pwd
-import argparse
 
-from . import conf
-from . import server
-from . import lockfile
-from . import daemon
-from . import logger
+from .daemon import Daemon
+from .options import Options
+from .server import Server
+from .logger import Logger
+from .lockfile import Lockfile
+from .conf import ConfDict, ConfYAML, ConfStack, ConfHunterFactory
+from .conf import ConfNotFoundError
 
-class Application(daemon.Daemon):
-    # If no configuration file is specified on the command line, this built-in
-    # list of locations is searched. Some values are computed later based on
-    # the relative location of the executable, i.e., argv[0].
-    # For safety, do not include the current directory.
-    conf_file_locations = [
-        '/etc/fadelisk',        # Ubuntu, Debian, Linux Mint, Knoppix
-        '/etc',                 # Red Hat, SuSE
-        '/srv/www/etc',         # FHS Service-centric location
-        # These values are interpolated at runtime.
-        '@PARENT@/etc/fadelisk',# Self-contained
-        '@PARENT@',             # Distribution?
-    ]
+class Application(Daemon):
+    """Fadelisk application
+
+    The application container for the Fadelisk process. Handles
+    loading configurations including command-line arguments,
+    daemonizing the process, and dispatching command-line actions to
+    start and stop the server.
+    """
+
     conf_file_name = 'fadelisk.yaml'
+    """The name of the configuration file."""
 
-    # Options are later combined from the configuration file and command line
-    # parameters. In addition, parameters that depend on other parameters
-    # are computed and added last, if necessary.
+    conf_file_locations = [
+        '/etc/fadelisk',            # Ubuntu, Debian, Linux Mint, Knoppix
+        '/etc',                     # Red Hat, SuSE
+        '/srv/www/etc',             # FHS Service-centric location
+        # These values are interpolated at runtime.
+        '@PARENT@/etc/fadelisk',    # Self-contained
+        '@PARENT@',                 # Distribution (from checkout or archive)
+    ]
+    """If no configuration file is specified on the command line, this
+    built-in list of locations is searched in order. The first
+    matching file "wins." Some values are computed later based on the
+    relative location of the executable in case the applications is
+    run from from a local directory (e.g., a tarball or version
+    control).
+    """
+
     default_conf = {
-        'verbose': False,
-        'log_level': 'warning',
-        'server': 'fadelisk 1.0 (barndt)',
-        'listen_port': 1066,
+        'server': 'fadelisk 0.9 (barndt)',
         'bind_address': '127.0.0.1',
+        'listen_port': 1066,
         'process_user': 'www-data',
+        'log_level': 'warning',
         'site_collections': ['/srv/www/site'],
-        'directory_index': 'index.html',
+        'directory_index': [ 'index.html', 'index.htm'],
+        'stderr_file': None,
     }
+    """Default configuration: This built-in configuration is used if no
+    configuration is found, and as a fallback for unspecified values.
+    """
 
     def __init__(self):
-        daemon.Daemon.__init__(self, stderr=None)
-        self.log = logger.Logger()
-        self.log.set_level("warning")
+        """Initializer
+
+        This initializer starts the logger, parses the command line options,
+        and loads the configuration. It also initializes the Daemon
+        superclass using the loaded configuration. An initialized
+        Application is ready to .run().
+        """
+        self.log = Logger()
+        self.log.set_level(self.default_conf['log_level'])  # from defaults
         self.log.stderr_on()
-        self.parse_args()
+
+        self.options = Options()
+        self.args = self.options.get_args()
+
         self.load_conf()
-        self.log.set_level(self.conf['log_level'])
 
-    def run(self):
-        self.dispatch()
+        self.log.set_level(self.conf['log_level'])  # from final config
 
-    def start(self):
-        self.daemonize()
-
-        lock = lockfile.Lockfile("fadelisk")
-        lock.acquire()
-        lock.chown_lockfile(self.conf['process_user'])
-
-        self.server = server.Server(self)       # build reactor
-        self.chuser(self.conf['process_user'])  # relinquish root
-        self.log.stderr_off()                   # quiet after init
-        self.server.run()                       # run() blocks here
-
-        lock.release()
-
-    def stop(self):
-        lock = lockfile.Lockfile("fadelisk")
-        try:
-            lock.kill_process()
-        except IOError:
-            self.log.error("No lockfile present")
-            sys.exit(1)
+        Daemon.__init__(self, stderr=self.conf['stderr_file'])
 
     def load_conf(self):
-        #-- Bootstrap configuration values
-        default_conf = conf.ConfDict(Application.default_conf)
+        """Configuration loader
 
-        #-- If a configuration file was specified on the command line, load it.
+        Loads command-line specified configuration, or discovers
+        configurations from known locations. Assembles these
+        configurations (including fallback defaults and command-line
+        arguments) into a configuration "stack" in order of overriding
+        priority.
+        """
+        # Bootstrap configuration values
+        default_conf = ConfDict(self.default_conf)
+
+        # If a configuration file was specified on the command line, load it.
         if self.args.conf_file:
-            application_conf = conf.ConfYAML(self.args.conf_file,
+            application_conf = ConfYAML(self.args.conf_file,
                                       ignore_changes=True)
         else:
-            #-- Otherwise, let the hunter try to find it.
+            # Otherwise, let the hunter try to find it.
             # Compute script location and interpolate into list of locations.
             script_path = os.path.realpath(sys.argv[0])
             script_dir = os.path.realpath(os.path.dirname(script_path))
@@ -93,56 +101,79 @@ class Application(daemon.Daemon):
                     location = script_parent + location[8:]
                 locations.append(location)
             try:
-                application_conf = conf.ConfHunterFactory(conf.ConfYAML,
-                                                   Application.conf_file_name,
-                                                   locations,
-                                                   ignore_changes=True)
-            except conf.ConfNotFoundError:
-                # If the hunter can't find it, fall back to an empty ConfDict
-                application_conf = conf.ConfDict()
+                application_conf = ConfHunterFactory(ConfYAML,
+                                                     self.conf_file_name,
+                                                     locations,
+                                                     ignore_changes=True)
+            except ConfNotFoundError:
+                application_conf = {}
 
         # Build the stack of configurations.
-        self.conf = conf.ConfStack([application_conf, default_conf],
+        self.conf = ConfStack([application_conf, self.default_conf.copy()],
                                   options=vars(self.args))
-    def parse_args(self):
-        pass
 
-        self.parser = argparse.ArgumentParser(
-            prog='fadelisk',
-            usage='%(prog)s [options] start | stop',
-            description='A web server where all pages are templates.',
-        )
-        self.parser.add_argument('-c', '--config', dest="conf_file",
-                                 help='specify a configuration file')
-        self.parser.add_argument('-l', '--loglevel', dest="log_level",
-                                 help='log at: error, warning, info, debug')
-        self.parser.add_argument('action', nargs=1, type=str)
-        self.args = self.parser.parse_args()
+    def action_start(self):
+        """Start the Fadelisk server
 
-    def command_not_implemented(self):
-        self.log.error('Command "%s" is not implemented yet.' %
+        Daemonizes, acquires a lockfile, sets process user, and runs
+        the server.
+        """
+        self.daemonize()
+
+        lock = Lockfile("fadelisk")
+        lock.acquire()
+        lock.chown_lockfile(self.conf['process_user'])
+
+        self.server = Server(self)              # build reactor
+        self.chuser(self.conf['process_user'])  # relinquish root
+        self.log.stderr_off()                   # quiet after init
+        self.server.run()                       # blocks
+
+        lock.release()
+
+    def action_stop(self):
+        """Stop the Fadelisk server
+
+        Terminates a running Fadelisk server, if possible.
+        """
+        lock = Lockfile("fadelisk")
+        try:
+            lock.kill_process()
+        except IOError:
+            self.log.error("No lockfile present")
+            sys.exit(1)
+
+    def action_not_implemented(self):
+        """Unimplemented action message
+
+        To support future development, prints a message about actions
+        that are present in the dispatcher but are not yet implemented.
+        """
+        self.log.error('Action "%s" is not implemented yet.' %
                        self.args.action[0])
+        sys.exit(1)
 
     def build_dispatch_table(self):
+        """Build the dispatch table actions specified on the command line."""
         self.dispatch_table = {
-            'start':    self.start,
-            'stop':     self.stop,
-            'restart':  self.command_not_implemented,
+            'start':    self.action_start,
+            'stop':     self.action_stop,
+            'restart':  self.action_not_implemented,
         }
 
-    def dispatch(self):
-        if not self.args:
-            self.parser.print_help(file=sys.stderr)
-            sys.exit(1)
-        command = self.args.action[0]
+    def run(self):
+        """Run the Fadelisk application
+
+        Dispatch action specified on the command line. Print usage
+        information if action is invalid.
+        """
+        action = self.args.action[0]
 
         self.build_dispatch_table()
-        execute = None
         try:
-            execute = self.dispatch_table[command]
-            execute()
+            execute = self.dispatch_table[action]
         except KeyError:
             self.parser.print_help(file=sys.stderr)
             sys.exit(1)
-
+        execute()
 
