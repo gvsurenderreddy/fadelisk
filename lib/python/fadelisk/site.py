@@ -24,7 +24,7 @@ class Site(object):
         #-- Build resource tree from site directory structure
         self.resource = FileResource(self.rel_path('content'))
 
-        self.resource.indexNames=['index.html', 'index.htm']
+        self.resource.indexNames=app.conf['directory_index']
         self.resource.processors = {
             '.html': self.html_processor_factory,
             '.htm': self.html_processor_factory,
