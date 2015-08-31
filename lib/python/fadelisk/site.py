@@ -1,13 +1,10 @@
 
 import os
-from string import Template
-from twisted.web import resource
 from mako.lookup import TemplateLookup
 
 from .file_resource import FileResource
 from .html_processor import HTMLProcessor
-from .error_resource import ErrorResource, InternalServerErrorResource
-from .error_resource import NotFoundResource
+from .error_resource import NotFoundResource, InternalServerErrorResource
 
 class Site(object):
     def __init__(self, path, site_conf, app, aliases=[]):

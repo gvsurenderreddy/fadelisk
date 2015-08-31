@@ -1,7 +1,5 @@
 
 import os
-import sys
-import pwd
 import signal
 
 from twisted.internet import epollreactor
