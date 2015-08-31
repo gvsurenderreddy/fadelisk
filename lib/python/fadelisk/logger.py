@@ -18,8 +18,7 @@ class Logger(object):
         self.openlog()
 
     def openlog(self):
-            self.syslog = syslog.openlog(self.ident, self.facility,
-                                         self.logoption)
+        syslog.openlog(self.ident, self.logoption, self.facility)
 
     def log(self, priority, message):
         syslog.syslog(priority, str(message))
