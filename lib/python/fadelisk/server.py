@@ -15,6 +15,17 @@ class SiteNotFoundPage(resource.ErrorPage):
         resource.ErrorPage.__init__(self, http.FORBIDDEN, "No Such Site",
                           "Your request does not correspond to a known site.")
 
+
+class CustomServerSite(server.Site):
+    def __init__(self, resource, server_header):
+        self.server_header = server_header
+        server.Site.__init__(self, resource)
+
+    def getResourceFor(self, request):
+        request.setHeader('server', self.server_header)
+        return server.Site.getResourceFor(self, request)
+
+
 class Server(object):
     def __init__(self, app):
         self.app = app
@@ -23,7 +34,9 @@ class Server(object):
         self.vhost = vhost.NameVirtualHost()
         self.vhost.default=SiteNotFoundPage()
         self.gather_sites()
-        self.ubersite = server.Site(self.vhost)
+        #self.ubersite = server.Site(self.vhost)
+        self.ubersite = CustomServerSite(self.vhost,
+                                         server_header=self.app.conf['server'])
 
         reactor.listenTCP(self.app.conf['listen_port'], self.ubersite,
                           interface=self.app.conf['bind_address'])

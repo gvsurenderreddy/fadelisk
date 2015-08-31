@@ -19,8 +19,6 @@ class HTMLProcessor(resource.Resource):
         return self.render_request(request)
 
     def render_request(self, request):
-        request.setHeader('server', self.site.app.conf['server'])
-
         path = request.path
         if path.endswith('/'):
             path += 'index.html'
