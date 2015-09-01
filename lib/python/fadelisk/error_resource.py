@@ -2,7 +2,6 @@
 import os
 from string import Template
 from twisted.web import resource
-from mako.lookup import TemplateLookup
 
 class ErrorResource(resource.Resource):
     isLeaf = True
@@ -17,29 +16,32 @@ class ErrorResource(resource.Resource):
         self.error_content = ErrorPageContent(fallback_title, fallback_message)
 
     def render(self, request):
-        request.setHeader('server', self.site.app.conf['server'])
         request.setResponseCode(self.response_code)
-
         try:
-            template = self.site.get_template_lookup().get_template(self.path)
+            self.site.reset_request_context()
+            template = self.site.get_template(self.path)
             return template.render(site=self.site, request=request,
                                    request_data=self.site.request_data,
                                    cache=self.site.cache)
-        except:
+        except Exception as exc:
+            self.site.app.log.error(exc)
             return self.error_content.get()
 
 
 class InternalServerErrorResource(ErrorResource):
     def __init__(self, site):
         ErrorResource.__init__(self, site,
-                               '/errors/500_internal_server_error.html',
+                               site.conf.get('error_page_500',
+                                     '/errors/500_internal_server_error.html'),
                                500, 'Internal Server Error',
                               'The server could not fulfill your request.')
 
 
 class NotFoundResource(ErrorResource):
     def __init__(self, site):
-        ErrorResource.__init__(self, site, '/errors/404_not_found.html',
+        ErrorResource.__init__(self, site,
+                               site.conf.get('error_page_404',
+                                             '/errors/404_not_found.html'),
                                404, 'Document Not Found',
                               'The document you requested could not be found.')
 

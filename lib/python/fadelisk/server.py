@@ -34,7 +34,6 @@ class Server(object):
         self.vhost = vhost.NameVirtualHost()
         self.vhost.default=SiteNotFoundPage()
         self.gather_sites()
-        #self.ubersite = server.Site(self.vhost)
         self.ubersite = CustomServerSite(self.vhost,
                                          server_header=self.app.conf['server'])
 

@@ -63,6 +63,9 @@ class Site(object):
         }
         self.template_lookup = TemplateLookup(**template_lookup_options)
 
+    def get_template(self, path):
+        return self.template_lookup.get_template(path)
+
     def initialize_cache(self):
         self.cache.clear()
         self.cache.update({
@@ -71,6 +74,45 @@ class Site(object):
             'file': {},
             'data': {},
         })
+
+    def initialize_request_data(self):
+        # Clear data before request (preserve ref)
+        self.request_data.clear()
+        self.request_data.update({
+            #-- For delivering media of other types, like image/png. Just
+            #   pack up your data payload and request.setHeader your
+            #   content type.
+            'payload': None,
+
+            #-- Forms require unique field IDs. This will be incremented by
+            #   templates which lay out input elements.
+            'unique_field_id': 0,
+
+            #-- Flags: Entries in this dictionary can be used to arbitrarily
+            #   alter rendering behavior in site templates.
+            'flag': {},
+
+            #-- Debug messages: Strings added to this list may be formatted
+            #   later to ask as informational output during development.
+            'debug': [],
+
+            #-- Extra Content: These can be used by a top-level site layout
+            #   template to allow inheriting pages to add additional content.
+            #   To use these, your top-level template must capture next.body
+            #   before emitting the document head.
+            'extra_local_fonts': [],
+            'extra_google_fonts': [],
+            'extra_stylesheets': [],
+            'extra_screen_stylesheets': [],
+            'extra_print_stylesheets': [],
+            'extra_scripts': [],
+            'extra_head_content': [],
+        })
+
+    def reset_request_context(self):
+        self.initialize_request_data()          # every request
+        if self.conf.get('debug'):
+            self.initialize_cache()             # only in debug, preserve ref
 
     def get_aliases(self):
         return self._aliases
