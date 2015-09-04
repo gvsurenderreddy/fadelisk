@@ -1,4 +1,5 @@
 
+from mako import exceptions
 from twisted.web import resource
 
 class HTMLProcessor(resource.Resource):
