@@ -5,6 +5,7 @@ from mako.lookup import TemplateLookup
 from .file_resource import FileResource
 from .html_processor import HTMLProcessor
 from .error_resource import NotFoundResource, InternalServerErrorResource
+from .knowledge import Knowledge
 
 class Site(object):
     def __init__(self, path, site_conf, app, aliases=[]):
@@ -63,8 +64,7 @@ class Site(object):
         }
         self.template_lookup = TemplateLookup(**template_lookup_options)
 
-    def get_template(self, path):
-        return self.template_lookup.get_template(path)
+        self.knowledge = Knowledge(self)
 
     def initialize_cache(self):
         self.cache.clear()
@@ -114,6 +114,12 @@ class Site(object):
         if self.conf.get('debug'):
             self.initialize_cache()             # only in debug, preserve ref
 
+    def get_template(self, path):
+        return self.template_lookup.get_template(path)
+
+    def html_processor_factory(self, request_path, registry):
+        return HTMLProcessor(request_path, registry, self)
+
     def get_aliases(self):
         return self._aliases
 
@@ -124,7 +130,4 @@ class Site(object):
         if path:
             return os.path.join(self.path, path)
         return self.path
-
-    def html_processor_factory(self, request_path, registry):
-        return HTMLProcessor(request_path, registry, self)
 
