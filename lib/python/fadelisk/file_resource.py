@@ -17,10 +17,11 @@ class FileResource(static.File):
 
     def directoryListing(self):
         for allowed_dir in self.site.conf.get('allow_directory_listing', []):
-            test_path = os.path.join(
-                self.site.rel_path('content'),
-                allowed_dir.strip('/'))
-            if self.path == test_path:
+            dir_ = os.path.join(self.site.rel_path('content'),
+                                     allowed_dir.strip('/'))
+            dir_len = len(dir_)
+            if (self.path == dir_ or
+                (len(self.path) > dir_len and self.path[dir_len] == '/')):
                 return static.DirectoryLister(self.path, self.listNames(),
                                               self.contentTypes,
                                               self.contentEncodings,
