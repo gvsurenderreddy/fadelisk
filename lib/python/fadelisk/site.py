@@ -23,7 +23,7 @@ class Site(object):
         self.fqdn = os.path.basename(self.path)
 
         #-- Build resource tree from site directory structure
-        self.resource = FileResource(self.rel_path('content'))
+        self.resource = FileResource(self.rel_path('content'), self)
 
         self.resource.indexNames=app.conf['directory_index']
         self.resource.processors = {
@@ -34,7 +34,7 @@ class Site(object):
         #-- "Lift" some subdirectories above content dir to keep them separate
         for directory in self.conf.get('top_level_directories', []):
             self.resource.putChild(directory,
-                FileResource(self.rel_path(directory)))
+                FileResource(self.rel_path(directory), self))
 
         #-- Build Error resources
         self.not_found_resource = NotFoundResource(self)
