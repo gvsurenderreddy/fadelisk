@@ -13,12 +13,10 @@ class FileResource(static.File):
         f.processors = self.processors
         f.indexNames = self.indexNames[:]
         f.childNotFound = self.childNotFound
-        #f.site = self.site
         return f
 
     def directoryListing(self):
         for allowed_dir in self.site.conf.get('allow_directory_listing', []):
-            raise RuntimeError(self.path)
             test_path = os.path.join(
                 self.site.rel_path('content'),
                 allowed_dir.strip('/'))
