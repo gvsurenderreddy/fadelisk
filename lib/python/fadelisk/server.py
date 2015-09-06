@@ -5,15 +5,11 @@ import signal
 from twisted.internet import epollreactor
 epollreactor.install()
 from twisted.internet import reactor
-from twisted.web import http, resource, server, vhost
+from twisted.web import resource, server, vhost
 
 from . import conf
 from . import site
-
-class SiteNotFoundPage(resource.ErrorPage):
-    def __init__(self):
-        resource.ErrorPage.__init__(self, http.FORBIDDEN, "No Such Site",
-                          "Your request does not correspond to a known site.")
+from .error_resource import SiteNotFoundResource
 
 
 class CustomServerSite(server.Site):
@@ -32,7 +28,7 @@ class Server(object):
         self.sites = []
 
         self.vhost = vhost.NameVirtualHost()
-        self.vhost.default=SiteNotFoundPage()
+        self.vhost.default=SiteNotFoundResource(self.app)
         self.gather_sites()
         self.ubersite = CustomServerSite(self.vhost,
                                          server_header=self.app.conf['server'])

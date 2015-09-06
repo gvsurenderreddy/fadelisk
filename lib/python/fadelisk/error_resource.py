@@ -1,7 +1,7 @@
 
 import os
 from string import Template
-from twisted.web import resource
+from twisted.web import resource, http
 
 class ErrorResource(resource.Resource):
     isLeaf = True
@@ -26,6 +26,19 @@ class ErrorResource(resource.Resource):
         except Exception as exc:
             self.site.app.log.error(exc)
             return self.error_content.get()
+
+
+class SiteNotFoundResource(resource.ErrorPage):
+    def __init__(self, app):
+        self.app = app
+
+        resource.ErrorPage.__init__(self, http.FORBIDDEN, "No Such Site",
+                          "Your request does not correspond to a known site.")
+
+    def render(self, request):
+        self.app.log.warning("Site not found for %s" %
+                             request.getHeader('host') or '(unknown host)')
+        return resource.ErrorPage.render(self, request)
 
 
 class InternalServerErrorResource(ErrorResource):
