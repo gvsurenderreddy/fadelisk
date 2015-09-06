@@ -2,6 +2,8 @@
 from mako import exceptions
 from twisted.web import resource
 
+from .error_resource import BadRequestResource
+
 class HTMLProcessor(resource.Resource):
     isLeaf = True
     allowedMethods = ('GET', 'POST', 'HEAD')
@@ -13,7 +15,8 @@ class HTMLProcessor(resource.Resource):
         self.site = site
 
     def render(self, request):
-        # TODO: Check allowedMethods
+        if request.method not in self.__class__.allowedMethods:
+            return BadRequestResource().render()
 
         path = request.path
         if path.endswith('/'):

@@ -46,6 +46,16 @@ class NotFoundResource(ErrorResource):
                               'The document you requested could not be found.')
 
 
+class BadRequestResource(ErrorResource):
+    def __init__(self, site):
+        ErrorResource.__init__(self, site,
+                               site.conf.get('error_page_400',
+                                             '/errors/400_bad_request.html'),
+                               400, 'Bad Request',
+                              'Your request could not be understood by the ' +
+                               'server')
+
+
 class ErrorPageContent(object):
     content= """
     <!DOCTYPE html>
