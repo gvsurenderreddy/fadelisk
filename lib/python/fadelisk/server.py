@@ -8,7 +8,7 @@ from twisted.internet import reactor
 from twisted.web import resource, server, vhost
 
 from . import conf
-from . import site
+from .site import FadeliskSite
 from .error_resource import SiteNotFoundResource
 
 
@@ -22,7 +22,7 @@ class CustomServerSite(server.Site):
         return server.Site.getResourceFor(self, request)
 
 
-class Server(object):
+class FadeliskServer(object):
     def __init__(self, app):
         self.app = app
         self.sites = []
@@ -83,7 +83,7 @@ class Server(object):
                                              % (fqdn, site_.fqdn))
                         break
                 else:
-                    this_site = site.Site(site_path, site_conf, self.app)
+                    this_site = FadeliskSite(site_path, site_conf, self.app)
                     self.vhost.addHost(fqdn, this_site.resource)
                     self.sites.append(this_site)
                     self.app.log.info("Loaded site %s" % fqdn)

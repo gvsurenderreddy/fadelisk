@@ -4,7 +4,7 @@ import sys
 
 from .daemon import Daemon
 from .options import Options
-from .server import Server
+from .server import FadeliskServer
 from .logger import Logger
 from .lockfile import Lockfile
 from .conf import ConfDict, ConfYAML, ConfStack, ConfHunterFactory
@@ -124,7 +124,7 @@ class Application(Daemon):
         lock.acquire()
         lock.chown_lockfile(self.conf['process_user'])
 
-        self.server = Server(self)              # build reactor
+        self.server = FadeliskServer(self)      # build reactor
         self.chuser(self.conf['process_user'])  # relinquish root
         self.log.stderr_off()                   # quiet after init
         self.server.run()                       # blocks

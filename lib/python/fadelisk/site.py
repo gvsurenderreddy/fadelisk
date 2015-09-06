@@ -7,7 +7,7 @@ from .html_processor import HTMLProcessor
 from .error_resource import NotFoundResource, InternalServerErrorResource
 from .knowledge import Knowledge
 
-class Site(object):
+class FadeliskSite(object):
     def __init__(self, path, site_conf, app, aliases=[]):
         self.path = path
         self.app = app
