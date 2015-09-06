@@ -111,4 +111,6 @@ class Server(object):
                         self.vhost.addHost(alias, this_site.resource)
                         self.app.log.info('Added alias %s for %s' %
                                           (alias, site_.fqdn))
+        if not self.sites:
+            self.app.log.warning('No sites could be loaded.')
 
