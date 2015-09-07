@@ -6,7 +6,8 @@ from .daemon import Daemon
 from .options import Options
 from .server import FadeliskServer
 from .logger import Logger
-from .lockfile import Lockfile
+from .lockfile import Lockfile, LockfileOpenError, LockfileEstablishError, \
+        LockfileStaleError, LockfileLockedError
 from .conf import ConfDict, ConfYAML, ConfStack, ConfHunterFactory
 from .conf import ConfNotFoundError
 
@@ -66,12 +67,82 @@ class Application(Daemon):
 
         self.options = Options()
         self.args = self.options.get_args()
-
         self.load_conf()
 
         self.log.set_level(self.conf['log_level'])  # from final config
 
         Daemon.__init__(self, stderr=self.conf['stderr_file'])
+
+    def run(self):
+        """Run the Fadelisk application
+
+        Dispatch action specified on the command line. Print usage
+        information if action is invalid.
+        """
+        action = self.args.action[0]
+
+        self.build_dispatch_table()
+        try:
+            action = self.dispatch_table[action]
+        except KeyError:
+            self.parser.print_help(file=sys.stderr)
+            sys.exit(2)
+        action()
+
+    def build_dispatch_table(self):
+        """Build the dispatch table actions specified on the command line."""
+        self.dispatch_table = {
+            'start':    self.action_start,
+            'stop':     self.action_stop,
+            'restart':  self.action_not_implemented,
+        }
+
+    def action_start(self):
+        """Start the Fadelisk server
+
+        Daemonizes, acquires a lockfile, sets process user, and runs
+        the server.
+        """
+        self.daemonize()
+
+        lock = Lockfile("fadelisk")
+        try:
+            lock.acquire()
+        except LockfileEstablishError:
+            sys.exit("Could not establish lock file")
+        except LockfileLockedError:
+            sys.exit("Lockfile present, process already running")
+        lock.chown_lockfile(self.conf['process_user'])
+
+        self.server = FadeliskServer(self)      # build reactor
+        self.chuser(self.conf['process_user'])  # relinquish root
+        self.log.stderr_off()                   # quiet after init
+        self.server.run()                       # blocks
+
+        lock.release()
+
+    def action_stop(self):
+        """Stop the Fadelisk server
+
+        Terminates a running Fadelisk server, if possible.
+        """
+        lock = Lockfile("fadelisk")
+        try:
+            lock.kill_process()
+        except LockfileStaleError:
+            sys.exit("Lockfile stale, removing")
+        except LockfileOpenError:
+            sys.exit("No lockfile present")
+
+    def action_not_implemented(self):
+        """Unimplemented action message
+
+        To support future development, prints a message about actions
+        that are present in the dispatcher but are not yet implemented.
+        """
+        self.log.error('Action "%s" is not implemented yet.' %
+                       self.args.action[0])
+        sys.exit(1)
 
     def load_conf(self):
         """Configuration loader
@@ -111,69 +182,4 @@ class Application(Daemon):
         # Build the stack of configurations.
         self.conf = ConfStack([application_conf, self.default_conf.copy()],
                                   options=vars(self.args))
-
-    def action_start(self):
-        """Start the Fadelisk server
-
-        Daemonizes, acquires a lockfile, sets process user, and runs
-        the server.
-        """
-        self.daemonize()
-
-        lock = Lockfile("fadelisk")
-        lock.acquire()
-        lock.chown_lockfile(self.conf['process_user'])
-
-        self.server = FadeliskServer(self)      # build reactor
-        self.chuser(self.conf['process_user'])  # relinquish root
-        self.log.stderr_off()                   # quiet after init
-        self.server.run()                       # blocks
-
-        lock.release()
-
-    def action_stop(self):
-        """Stop the Fadelisk server
-
-        Terminates a running Fadelisk server, if possible.
-        """
-        lock = Lockfile("fadelisk")
-        try:
-            lock.kill_process()
-        except IOError:
-            self.log.error("No lockfile present")
-            sys.exit(1)
-
-    def action_not_implemented(self):
-        """Unimplemented action message
-
-        To support future development, prints a message about actions
-        that are present in the dispatcher but are not yet implemented.
-        """
-        self.log.error('Action "%s" is not implemented yet.' %
-                       self.args.action[0])
-        sys.exit(1)
-
-    def build_dispatch_table(self):
-        """Build the dispatch table actions specified on the command line."""
-        self.dispatch_table = {
-            'start':    self.action_start,
-            'stop':     self.action_stop,
-            'restart':  self.action_not_implemented,
-        }
-
-    def run(self):
-        """Run the Fadelisk application
-
-        Dispatch action specified on the command line. Print usage
-        information if action is invalid.
-        """
-        action = self.args.action[0]
-
-        self.build_dispatch_table()
-        try:
-            execute = self.dispatch_table[action]
-        except KeyError:
-            self.parser.print_help(file=sys.stderr)
-            sys.exit(1)
-        execute()
 
