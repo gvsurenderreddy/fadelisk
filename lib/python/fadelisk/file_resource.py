@@ -1,12 +1,15 @@
 
 import os
 from twisted.web import resource, static
+from .error_resource import NotFoundResource
 
 class FileResource(static.File):
     def __init__(self, path, site):
         static.File.__init__(self, path)
         self.path = path
         self.site = site
+
+        self.not_found_resource = NotFoundResource(self.site)
 
     def createSimilarFile(self, path):
         f = self.__class__(path, self.site)
@@ -26,6 +29,5 @@ class FileResource(static.File):
                                               self.contentTypes,
                                               self.contentEncodings,
                                               self.defaultType)
-        return resource.ForbiddenResource(
-            "You are not allowed to list the contents of this directory.")
+        return self.not_found_resource
 
