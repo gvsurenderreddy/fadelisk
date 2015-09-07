@@ -46,7 +46,8 @@ class InternalServerErrorResource(ErrorResource):
         ErrorResource.__init__(self, site,
                                site.conf.get('error_page_500',
                                      '/errors/500_internal_server_error.html'),
-                               500, 'Internal Server Error',
+                               http.INTERNAL_SERVER_ERROR,
+                               'Internal Server Error',
                               'The server could not fulfill your request.')
 
 
@@ -55,7 +56,8 @@ class NotFoundResource(ErrorResource):
         ErrorResource.__init__(self, site,
                                site.conf.get('error_page_404',
                                              '/errors/404_not_found.html'),
-                               404, 'Document Not Found',
+                               http.NOT_FOUND,
+                               'Document Not Found',
                               'The document you requested could not be found.')
 
 
@@ -64,7 +66,8 @@ class BadRequestResource(ErrorResource):
         ErrorResource.__init__(self, site,
                                site.conf.get('error_page_400',
                                              '/errors/400_bad_request.html'),
-                               400, 'Bad Request',
+                               http.BAD_REQUEST,
+                               'Bad Request',
                               'Your request could not be understood by the ' +
                                'server')
 
