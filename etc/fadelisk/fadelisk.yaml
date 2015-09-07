@@ -8,51 +8,34 @@
 #   services into /srv provides flexibility in directory layout, allows
 #   modularization of mounted file systems, make backups easier, and
 #   is compatible with the File Heirarchy Standard as observed on 
-#   modern systems. An example directory layout might look like this:
-#
-#   /srv
-#     /db  -------.
-#     /samba      |
-#       /share_1  }-- Other services which might be located on /srv
-#     /vcs        |
-#       /git -----'
-#     /www - directory for the WWW service
-#       /bin - scripts and binaries specific to web service
-#       /log - log files for each site, if kept separate
-#       /site - directory in which sites are placed
-#         /www.example.com - an example site
-#           /etc - configuration files specific to this site
-#           /content - web content for this site
-#           /lib - library files specific to this site
-#           /tmp - temporary files such as cached objects
-#
+#   modern systems.
 #   It is also suggested that the directory for each individual site be
 #   named with the canonical FQDN of that web host, or if each FQDN is
 #   equally canonical, the most commonly known name.
-#   default: []
-site_collections:
-    - "/srv/www/site"
+#   Default:
+#   site_collections:
+#       - "/srv/www/sites"
 
 #-- EXTRA LIBRARIES: Directories with other Python modules to be appended
 #   to sys.path
-#   default: []
-extra_libraries:
-    - "/srv/www/lib/python"
+#   Default:
+#   extra_libraries:
+#       - "/srv/www/lib/python"
 
 #-- TEMPLATES: Directories with heirarchies of mako templates. These will
 #   be searched in order for a template at a given path.
-#   default: []
-template_directories:
-    - "/srv/project/fadelisk/templates"
+#   Default:
+#   template_directories:
+#       - "/srv/project/fadelisk/templates"
 
 #-- BIND ADDRESS:
 #   Address to listen on (a single address for now, except for the case of
 #   0.0.0.0, which binds the socket to all available interfaces.) Host names
 #   are allowed instead of addresses, but addresses are safer.
-#   default: "127.0.0.1"
-# bind_address: "127.0.0.1"
+#   Default:
+#   bind_address: "127.0.0.1"
 
 #-- LISTEN PORT:
-#   default: 1066
-# listen_port: "1066"
+#   Default:
+#   listen_port: "1066"
 

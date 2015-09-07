@@ -1,6 +1,6 @@
 
-import os
 import sys
+from os.path import dirname, join, realpath
 
 from .daemon import Daemon
 from .options import Options
@@ -40,14 +40,16 @@ class Application(Daemon):
     """
 
     default_conf = {
-        'server': 'fadelisk 0.9 (barndt)',
+        'server': 'fadelisk 1.0 (barndt)',
         'bind_address': '127.0.0.1',
         'listen_port': 1066,
         'process_user': 'www-data',
         'log_level': 'warning',
-        'site_collections': ['/srv/www/site'],
+        'site_collections': ['/srv/www/sites'],
         'directory_index': [ 'index.html', 'index.htm'],
         'stderr_file': None,
+        'extra_libraries': "/srv/www/lib/python"
+
     }
     """Default configuration: This built-in configuration is used if no
     configuration is found, and as a fallback for unspecified values.
@@ -61,6 +63,9 @@ class Application(Daemon):
         superclass using the loaded configuration. An initialized
         Application is ready to .run().
         """
+        lib_dir = dirname(realpath(__file__))
+        self.archive_path = realpath(join(lib_dir, '../../..'))
+
         self.log = Logger()
         self.log.set_level(self.default_conf['log_level'])  # from defaults
         self.log.stderr_on()
@@ -163,9 +168,9 @@ class Application(Daemon):
         else:
             # Otherwise, let the hunter try to find it.
             # Compute script location and interpolate into list of locations.
-            script_path = os.path.realpath(sys.argv[0])
-            script_dir = os.path.realpath(os.path.dirname(script_path))
-            script_parent = os.path.realpath(os.path.join(script_dir, '..'))
+            script_path = realpath(sys.argv[0])
+            script_dir = realpath(dirname(script_path))
+            script_parent = realpath(join(script_dir, '..'))
             locations = []
             for location in Application.conf_file_locations:
                 if location.startswith('@PARENT@'):
@@ -182,4 +187,9 @@ class Application(Daemon):
         # Build the stack of configurations.
         self.conf = ConfStack([application_conf, self.default_conf.copy()],
                                   options=vars(self.args))
+
+    def rel_path(self, path=None):
+        if path:
+            return join(self.archive_path, path)
+        return self.archive_path
 

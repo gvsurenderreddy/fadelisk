@@ -46,11 +46,14 @@ class FadeliskSite(object):
         self.template_lookup_directories = [
             self.rel_path('content'),
             self.rel_path('templates'),
-            self.rel_path('template'),
         ]
         self.template_lookup_directories.extend(
-            self.app.conf.get('template_directories', [])
+            self.app.conf.get('template_directories', []),
         )
+
+        app_template_path = self.app.rel_path('templates')
+        if os.path.exists(app_template_path):
+            self.template_lookup_directories.append(app_template_path)
 
         #-- Create the template resolvers
         template_lookup_options = {
