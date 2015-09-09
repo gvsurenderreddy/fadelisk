@@ -51,7 +51,7 @@ class FadeliskSite(object):
             self.app.conf.get('template_directories', []),
         )
 
-        app_template_path = self.app.rel_path('templates')
+        app_template_path = self.app.rel_path('lib/templates')
         if os.path.exists(app_template_path):
             self.template_lookup_directories.append(app_template_path)
 
