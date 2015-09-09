@@ -205,7 +205,7 @@ class ConfStack(object):
 def ConfHunterFactory(cls, filename, locations=None, ignore_changes=False):
     if locations == None:
         script_parent = os.path.join([os.path.dirname(sys.argv[0]), '..'])
-        locations = [os.path.join(script_parent, 'etc'), script_parent, '.']
+        locations = [os.path.join(script_parent, 'conf'), script_parent, '.']
 
     for location in locations:
         conf_file = os.path.join(location, filename)

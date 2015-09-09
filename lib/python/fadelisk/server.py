@@ -50,12 +50,12 @@ class FadeliskServer(object):
             for fqdn in os.listdir(collection):
                 #-- Build and check path
                 site_path = os.path.join(os.path.abspath(collection), fqdn)
-                site_etc_path = os.path.join(site_path, 'etc')
+                site_conf_path = os.path.join(site_path, 'conf')
                 if not os.path.isdir(site_path):
                     continue
 
                 #-- Check for conf file
-                site_conf_file = os.path.join(site_etc_path, 'site.yaml')
+                site_conf_file = os.path.join(site_conf_path, 'site.yaml')
                 if not os.path.exists(site_conf_file):
                     continue
                 try:
