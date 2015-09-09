@@ -1,7 +1,7 @@
 <%!
     import os
     import fadelisk
-    leave_lower = 'and of the or with by to a nor because'.split()
+    leave_lower = 'a an the and but or for nor on at to from by'.split()
 %>
 
 <%def name="page_title(uri=None)">
