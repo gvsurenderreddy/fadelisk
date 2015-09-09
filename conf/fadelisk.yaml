@@ -1,4 +1,11 @@
 
+#== FADELISK SERVER CONFIGURATION
+#   If you need to change the defaults, copy this file to
+#   /etc/fadelisk/fadelisk.yaml or /etc/fadelisk.yaml
+#   and make changes below. If the defaults are adequate,
+#   Fadelisk will use the built-in defaults if this file
+#   is not present.
+
 #-- SITE COLLECTIONS: While a Fadelisk "site" is a directory containing 
 #   subdirectories of configuration files, content, and other data for
 #   a single web site, a "site collection" is a directory which contains
@@ -12,19 +19,19 @@
 #   It is also suggested that the directory for each individual site be
 #   named with the canonical FQDN of that web host, or if each FQDN is
 #   equally canonical, the most commonly known name.
-#   Default:
+#
 #   site_collections:
 #       - "/srv/www/sites"
 
 #-- EXTRA LIBRARIES: Directories with other Python modules to be appended
 #   to sys.path
-#   Default:
+#
 #   extra_libraries:
 #       - "/srv/www/lib/python"
 
 #-- TEMPLATES: Directories with heirarchies of mako templates. These will
 #   be searched in order for a template at a given path.
-#   Default:
+#
 #   template_directories:
 #       - "/srv/project/fadelisk/templates"
 
@@ -32,10 +39,10 @@
 #   Address to listen on (a single address for now, except for the case of
 #   0.0.0.0, which binds the socket to all available interfaces.) Host names
 #   are allowed instead of addresses, but addresses are safer.
-#   Default:
+#
 #   bind_address: "127.0.0.1"
 
 #-- LISTEN PORT:
-#   Default:
+#
 #   listen_port: "1066"
 
