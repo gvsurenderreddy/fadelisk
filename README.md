@@ -1,4 +1,4 @@
-#fadelisk
+# Fadelisk
 
 Fadelisk is a web server where all HTML documents are templates. It uses a simple, natural directory layout reminiscent of static web servers. All HTML documents are rendered by [Mako], a rich templating system that brings the power of [Python] to each and every page.
 
