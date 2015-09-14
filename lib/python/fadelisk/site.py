@@ -51,7 +51,7 @@ class FadeliskSite(object):
             self.app.conf.get('template_directories', []),
         )
 
-        app_template_path = self.app.rel_path('lib/templates')
+        app_template_path = self.app.rel_path('lib', 'templates')
         if os.path.exists(app_template_path):
             self.template_lookup_directories.append(app_template_path)
 
@@ -60,7 +60,7 @@ class FadeliskSite(object):
             'directories': self.template_lookup_directories,
             'cache_type': 'memory',
             #'cache_type': 'file',
-            #'module_directory': self.rel_path('tmp/mako-module'),
+            #'module_directory': self.rel_path('tmp', 'mako-module'),
             'input_encoding': 'utf-8',
             'output_encoding': 'utf-8',
             'encoding_errors': 'replace',
@@ -129,8 +129,8 @@ class FadeliskSite(object):
     def add_alias(self, alias):
         self._aliases.append(alias)
 
-    def rel_path(self, path=None):
-        if path:
-            return os.path.join(self.path, path)
+    def rel_path(self, *nodes):
+        if nodes:
+            return os.path.join(self.path, *nodes)
         return self.path
 

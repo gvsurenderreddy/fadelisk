@@ -188,8 +188,8 @@ class Application(Daemon):
         self.conf = ConfStack([application_conf, self.default_conf.copy()],
                                   options=vars(self.args))
 
-    def rel_path(self, path=None):
-        if path:
-            return join(self.archive_path, path)
+    def rel_path(self, *nodes):
+        if nodes:
+            return join(self.archive_path, *nodes)
         return self.archive_path
 

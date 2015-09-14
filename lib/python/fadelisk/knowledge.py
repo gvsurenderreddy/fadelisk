@@ -12,7 +12,7 @@ class Knowledge(object):
         self.dirs = []
         possible_dirs = [
             self.library_rel_path('knowledge'),
-            site.rel_path('/lib/knowledge'),
+            site.rel_path('lib', 'knowledge'),
             site.rel_path('knowledge'),
             '/usr/local/lib/fadelisk/knowledge',
             '/usr/lib/fadelisk/knowledge',
