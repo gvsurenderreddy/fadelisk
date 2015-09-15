@@ -51,31 +51,28 @@
     %>
 </%def>
 
-<%def name="breadcrumb_title(path=None, separator=' &rarr; ', links=True)">
+<%def name="breadcrumb_title(path=None, separator=' &rarr; ')">
     <%
         traversed = traversed_paths(path)
+        if len(traversed) == 1:
+            return "Home"
         titles = [page_title(p) for p in traversed[1:]]
 
         return separator.join(titles)
     %>
 </%def>
 
-<%def name="breadcrumbs(traversed=None, path=None,
-            separator=' / ', links=True)">
+<%def name="breadcrumbs(traversed=None, path=None, separator=' / ')">
     <%
         if not traversed:
             traversed = traversed_paths(path)
 
         trail = []
         for place in traversed:
-            if not place.beginswith('/'):
+            if not place.startswith('/'):
                 trail.append(place)
                 continue
-            if links:
-                trail.append('<a href="%s">%s</a>' %
-                             (place, page_title(place)))
-            else:
-                trail.append(page_title(place))
+            trail.append('<a href="%s">%s</a>' % (place, page_title(place)))
 
         return separator.join(trail)
     %>
