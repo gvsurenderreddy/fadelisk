@@ -93,7 +93,7 @@ class FadeliskSite(object):
 
             #-- Flags: Entries in this dictionary can be used to arbitrarily
             #   alter rendering behavior in site templates.
-            'flag': {},
+            'flags': {},
 
             #-- Debug messages: Strings added to this list may be formatted
             #   later to ask as informational output during development.
