@@ -11,7 +11,16 @@
         pygments_html_formatter = None
 %>
 
-<%def name="get_content()">
+<%def name="catch(func)">
+    <%
+        try:
+            func()
+        except:
+            handle()
+    %>
+</%def>
+
+<%def name="handle()">
     <%
         if site.conf.get('debug'):
             fadelisk_exception()
