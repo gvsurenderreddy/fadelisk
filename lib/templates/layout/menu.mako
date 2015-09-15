@@ -1,12 +1,7 @@
-<%namespace file="/layout/page_title.mako" import="page_title" />
+<%namespace name="page_info" file="/page/info.mako" />
 
-<%def name="simple(
-    items=[],
-    override={},
-    tooltip={},
-    element_class=None,
-    element_id=None
-    )">
+<%def name="simple(items=[], overrides={}, tooltips={}, element_class=None,
+    element_id=None)">
     <%
         # Add in classes and IDs
         class_id = ''
@@ -17,53 +12,32 @@
     %>
     <div${class_id}>
         % for item in items:
-            <span>${menu_button(item, override, tooltip)}</span>
+            <span>${menu_button(item, overrides, tooltips)}</span>
         % endfor
     </div>
 </%def>
 
-<%def name="menu_button(path,
-    override={},
-    tooltip={},
-    highlight_current=False
-    )">
+<%def name="menu_button(path, overrides={}, tooltips={},
+    highlight_current=False)">
     <%
-        if path in override:
-            label = override[path]
-        else:
-            label = page_title(path)
+        try:
+            label = overrides[path]
+        except:
+            label = page_info.page_title(path)
+
         title = ''
-        if path in tooltip:
-            title = ' title="%s"' % tooltip[path]
+        if path in tooltips:
+            title = ' title="%s"' % tooltips[path]
 
-        current = False
-        if highlight_current:
-            if path == '/':
-                if request.uri == '/':
-                    current = True
-            else:
-                if request.uri.startswith(path):
-                    current = True
-        cls = ""
-        if current:
-            cls = 'class="current" '
-
-#        context.write('               <a %shref="%s"%s>%s</a>'
-#            % (cls, path, title, label));
-#        return ''
+        cls = ''
+        if highlight_current and page_info.is_current_path(path):
+            cls = ' class="current"'
     %>
-    <a ${cls}href="${path}"${title}>${label}</a>
+    <a${cls} href="${path}"${title}>${label}</a>
 </%def>
 
-<%def name="ul(
-    items=[],
-    override={},
-    tooltip={},
-    indications=[],
-    element_class=None,
-    element_id=None,
-    highlight_current=False
-    )">
+<%def name="ul(items=[], overrides={}, tooltips={}, indications=[],
+    element_class=None, element_id=None, highlight_current=False)">
     <%
         # Add in classes and IDs
         class_id = ''
@@ -74,7 +48,7 @@
     %>
     <ul${class_id}>
         % for item in items:
-            <li>${menu_button(item, override, tooltip, highlight_current)}</li>
+            <li>${menu_button(item, overrides, tooltips, highlight_current)}</li>
         % endfor
         % for indication in indications:
             <li><span>${indication}</span></li>

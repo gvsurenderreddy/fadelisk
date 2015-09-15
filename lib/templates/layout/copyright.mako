@@ -1,9 +1,11 @@
+<%namespace name="page_info" file="/page/info.mako" />
+
 <%!
     from datetime import date
 %>
 
-
-<%def name="declaration(year, name, use_group=False, copyright_word='&copy;')">
+<%def name="declaration(year, name=None, use_group=False,
+    copyright_word='&copy;')">
 <%doc>
     year: year of first publication
     name: the name of the organization
@@ -12,6 +14,11 @@
         are officially accepted.
 </%doc>
 <%
+    if name == None:
+        name = page_info.organization_name()
+        if name == None:
+            return ''
+
     this_year = date.today().year
     cprt_year = year
     if year != this_year:
@@ -21,8 +28,6 @@
         else:
             cprt_year = '%s-%s' % (year, this_year)
 %>
-
 ${copyright_word} ${cprt_year} ${name}
-
 </%def>
 
