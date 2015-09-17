@@ -9,7 +9,7 @@ from twisted.web import resource, server, vhost
 
 from . import conf
 from .site import FadeliskSite
-from .error_resource import SiteNotFoundResource
+from .resource import SiteNotFoundResource
 
 
 class CustomServerSite(server.Site):

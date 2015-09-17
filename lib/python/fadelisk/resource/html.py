@@ -2,9 +2,9 @@
 from mako import exceptions
 from twisted.web import resource
 
-from .error_resource import BadRequestResource
+from .bad_request import BadRequestResource
 
-class HTMLProcessor(resource.Resource):
+class HTMLResource(resource.Resource):
     isLeaf = True
     allowedMethods = ('GET', 'POST', 'HEAD')
 
@@ -19,15 +19,15 @@ class HTMLProcessor(resource.Resource):
         if request.method not in self.__class__.allowedMethods:
             return BadRequestResource().render()
 
-        path = request.path
-        if path.endswith('/'):
-            path += 'index.html'
+        if '//' in request.path:
+            while '//'  in path:
+                path = path.replace('//', '/')
+            request.setHeader('location', path)
+            request.setResponseCode(301)
+            return ''
 
         try:
-            self.site.render_context.reset()
-            template = self.site.get_template(path)
-            content = template.render(site=self.site, request=request,
-                                      **self.site.render_context.get())
+            content = self.site.render_request(request)
         except Exception as exc:
             self.site.app.log.error(exc)
             request.setResponseCode(500)
