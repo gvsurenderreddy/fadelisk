@@ -9,10 +9,11 @@ class HTMLProcessor(resource.Resource):
     allowedMethods = ('GET', 'POST', 'HEAD')
 
     def __init__(self, path, registry, site):
-        resource.Resource.__init__(self)
         self.path = path
         self.registry = registry
         self.site = site
+
+        resource.Resource.__init__(self)
 
     def render(self, request):
         if request.method not in self.__class__.allowedMethods:
@@ -23,11 +24,10 @@ class HTMLProcessor(resource.Resource):
             path += 'index.html'
 
         try:
-            self.site.reset_request_context()
+            self.site.render_context.reset()
             template = self.site.get_template(path)
             content = template.render(site=self.site, request=request,
-                                      request_data=self.site.request_data,
-                                      cache=self.site.cache)
+                                      **self.site.render_context.get())
         except Exception as exc:
             self.site.app.log.error(exc)
             request.setResponseCode(500)
@@ -36,7 +36,7 @@ class HTMLProcessor(resource.Resource):
             else:
                 return self.site.internal_server_error_resource.render(request)
 
-        payload = self.site.request_data.get('payload')
+        payload = self.site.render_context.get_request_data()['payload']
         if payload != None:
             return payload
 
