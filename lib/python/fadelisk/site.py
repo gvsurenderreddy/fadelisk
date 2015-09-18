@@ -43,17 +43,23 @@ class FadeliskSite(object):
         self.internal_server_error_resource = InternalServerErrorResource(self)
 
         #-- Build list of directories to use for template resolution
-        self.template_lookup_directories = [
+        template_paths = [
             self.rel_path('content'),
             self.rel_path('templates'),
         ]
-        self.template_lookup_directories.extend(
-            self.app.conf.get('template_directories', []),
-        )
-
-        app_template_path = self.app.rel_path('lib', 'templates')
-        if os.path.exists(app_template_path):
-            self.template_lookup_directories.append(app_template_path)
+        template_paths.extend(self.app.conf.get('template_directories', []))
+        template_paths.extend([
+            self.app.rel_path('lib', 'templates'),
+            self.app.rel_path('lib', 'packages'),
+            '/usr/local/lib/fadelisk/templates',
+            '/usr/local/lib/fadelisk/packages',
+            '/usr/lib/fadelisk/templates',
+            '/usr/lib/fadelisk/packages',
+        ])
+        self.template_lookup_directories = []
+        for template_path in template_paths:
+            if os.path.exists(template_path):
+                self.template_lookup_directories.append(template_path)
 
         #-- Create the template resolvers
         template_lookup_options = {
