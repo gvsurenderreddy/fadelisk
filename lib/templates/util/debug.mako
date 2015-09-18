@@ -6,10 +6,11 @@
 
 <%def name="append(message)">
     <%
+        if not active():
+            return ''
+
         if not 'debug' in request_data:
             request_data['debug'] = []
-        if not site.conf['debug']:
-            return
 
         request_data['debug'].append(message)
     %>
@@ -17,8 +18,10 @@
 
 <%def name="append_traceback(exc=None)">
     <%
-        if exc:
-            append('* EXCEPTION: %s' % str(exc))
+        if not exc:
+            return ''
+
+        append('* EXCEPTION: %s' % str(exc))
         append(traceback.format_exc())
     %>
 </%def>
@@ -31,7 +34,7 @@
 
 <%def name="display()">
     <%
-        if not site.conf.get('debug'):
+        if not active()
             return ''
         messages = request_data.get('debug', [])
         if not messages:
@@ -46,6 +49,9 @@
 
 <%def name="pretty_print(something)">
     <%
+        if not active()
+            return ''
+
         pp = pprint.PrettyPrinter(indent=2, width=240)
         append(pp.pformat(something))
     %>
