@@ -76,11 +76,11 @@ class FadeliskServer(object):
                                          'already present.' % fqdn)
                     continue
                 # ...and not listed as an alias for another site.
-                for site_ in self.sites:
-                    if fqdn in site_.get_aliases():
+                for site in self.sites:
+                    if fqdn in site.aliases:
                         self.app.log.warning('Site %s already listed as ' +
                                              'alias for %s'
-                                             % (fqdn, site_.fqdn))
+                                             % (fqdn, site.fqdn))
                         break
                 else:
                     this_site = FadeliskSite(site_path, site_conf, self.app)
@@ -96,17 +96,17 @@ class FadeliskServer(object):
                                              'present as site' % (alias, fqdn))
                         continue
                     #   ...and not listed as an alias in some other site.
-                    for site_ in self.sites:
-                        if alias in site_.get_aliases():
+                    for site in self.sites:
+                        if alias in site.aliases:
                             self.app.log.warning('Alias %s already listed ' +
                                                  'as alias for %s' %
-                                                 (alias, site_.fqdn))
+                                                 (alias, site.fqdn))
                             break
                     else:
-                        this_site.add_alias(alias)
+                        this_site.aliases.append(alias)
                         self.vhost.addHost(alias, this_site.resource)
                         self.app.log.info('Added alias %s for %s' %
-                                          (alias, site_.fqdn))
+                                          (alias, site.fqdn))
         if not self.sites:
             self.app.log.warning('No sites could be loaded.')
 
