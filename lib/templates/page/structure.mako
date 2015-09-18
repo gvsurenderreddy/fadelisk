@@ -21,9 +21,6 @@
                 page_info.breadcrumb_title()])}
         </title>
             ${stylesheets()}
-##        <!--[if gte IE 9]>
-##        <link rel="stylesheet" href="/style/ie9-gradient.css" />
-##        <![endif]-->
             ${local_fonts()}
             ${google_fonts()}
             ${scripts()}
