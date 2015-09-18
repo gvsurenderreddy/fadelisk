@@ -20,6 +20,7 @@ class HTMLResource(resource.Resource):
             return BadRequestResource().render()
 
         if '//' in request.path:
+            path = request.path
             while '//'  in path:
                 path = path.replace('//', '/')
             request.setHeader('location', path)
