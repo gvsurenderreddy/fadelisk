@@ -16,20 +16,17 @@
         try:
             func()
         except:
-            handle()
-    %>
-</%def>
-
-<%def name="handle()">
-    <%
-        if site.conf.get('debug'):
-            fadelisk_exception()
-        else:
-            internal_server_error()
+            if site.conf.get('debug'):
+                fadelisk_exception()
+            else:
+                internal_server_error()
     %>
 </%def>
 
 <%def name="internal_server_error()">
+    <%
+        request.setResponseCode(500)
+    %>
     <h1>Internal Server Error</h1>
     The server encountered an error while rendering the page you requested.
 </%def>
