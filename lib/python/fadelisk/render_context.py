@@ -62,20 +62,23 @@ class RenderContext(object):
             self.__cache.reset()        # only in debug
 
 
-class RequestData(dict):
-    def __init__(self):
-        self.update(request_data_reset_values)
+class RequestContextMember(dict):
+    def __init__(self, initial_values):
+        self.initial_values = initial_values
+        self.update(self.initial_values)
 
     def reset(self):
         self.clear()
-        self.update(request_data_reset_values)
+        self.update(self.initial_values)
 
 
-class Cache(dict):
+class RequestData(RequestContextMember):
     def __init__(self):
-        self.update(cache_reset_values)
+        RequestContextMember.__init__(self, request_data_reset_values)
 
-    def reset(self):
-        self.clear()
-        self.update(cache_reset_values)
+
+class Cache(RequestContextMember):
+    def __init__(self):
+        RequestContextMember.__init__(self, cache_reset_values)
+
 
