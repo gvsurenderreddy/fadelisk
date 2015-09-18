@@ -4,6 +4,12 @@
     import pprint
 %>
 
+<%def name="active()">
+    <%
+        return bool(site.conf.get('debug'));
+    %>
+</%def>
+
 <%def name="append(message)">
     <%
         if not active():
@@ -26,13 +32,7 @@
     %>
 </%def>
 
-<%def name="active()">
-    <%
-        return bool(site.conf.get('debug'));
-    %>
-</%def>
-
-<%def name="display()">
+<%def name="console()">
     <%
         if not active():
             return ''
@@ -47,13 +47,13 @@
     </div>
 </%def>
 
-<%def name="pretty_print(something)">
+<%def name="pretty_print(data)">
     <%
         if not active():
             return ''
 
         pp = pprint.PrettyPrinter(indent=2, width=240)
-        append(pp.pformat(something))
+        append(pp.pformat(data))
     %>
 </%def>
 

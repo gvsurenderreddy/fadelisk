@@ -1,5 +1,5 @@
 <%namespace name="page_info" file="/page/info.mako" />
-<%namespace name="menu" file="/layout/menu.mako" />
+<%namespace name="menu" file="/menu.mako" />
 
 ##:::( Document )::::::::::::::::::::::::::::::::::::::::::::::::::::::::::##
 
