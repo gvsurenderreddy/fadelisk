@@ -4,7 +4,7 @@
     from datetime import date
 %>
 
-<%def name="copyright_declaration(year, name=None, use_group=False,
+<%def name="copyright_declaration(year=0, name=None, use_group=False,
     copyright_word='&copy;')">
 <%doc>
     year: year of first publication
@@ -16,18 +16,26 @@
 <%
     if name == None:
         name = organization.organization_name()
-        if name == None:
-            return ''
+
+    if not name:
+        return ''
 
     this_year = date.today().year
-    cprt_year = year
-    if year != this_year:
+
+    if not year:
+        year = site.conf.get('first_publication', this_year)
+
+    if year == this_year:
+        cprt_year = year
+    else:
 	if use_group:
             cprt_year_group = [str(yr) for yr in range(year, this_year+1)]
             cprt_year = ', '.join(cprt_year_group)
         else:
             cprt_year = '%s-%s' % (year, this_year)
 %>
-${copyright_word} ${cprt_year} ${name}
+<span id="copyright-declaration">
+    ${copyright_word} ${cprt_year} ${name}
+</span>
 </%def>
 
