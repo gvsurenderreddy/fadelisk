@@ -1,11 +1,15 @@
+
+<%namespace name="path_utils" file="/path_utils.mako" />
+<%namespace name="title_utils" file="/title_utils.mako" />
+
 <%!
     from fadelisk.conf import ConfYAML
     leave_lower = 'a an the and but or for nor on at to from by'.split()
 %>
 
-<%def name="page_title(path=None)">
+<%def name="title(path=None)">
     <%
-        path = clean_path(path)
+        path = path_utils.clean_path(path)
 
         # Try to load page title configuration into cache
         if 'page_title' not in cache['conf']:
@@ -53,10 +57,10 @@
 
 <%def name="breadcrumb_title(path=None, separator=' &rarr; ')">
     <%
-        traversed = traversed_paths(path)
+        traversed = path_utils.traversed_paths(path)
         if len(traversed) == 1:
             return "Home"
-        titles = [page_title(p) for p in traversed[1:]]
+        titles = [title_utils.title(p) for p in traversed[1:]]
 
         return separator.join(titles)
     %>
@@ -64,8 +68,13 @@
 
 <%def name="breadcrumbs(traversed=None, path=None, separator=' / ')">
     <%
+        if not path:
+            path = request.path
+        else:
+            path = clean_path(path)
+
         if not traversed:
-            traversed = traversed_paths(path)
+            traversed = path_utils.traversed_paths(path)
 
         trail = []
         for place in traversed:
@@ -78,51 +87,3 @@
     %>
 </%def>
 
-<%def name="traversed_paths(path=None)">
-    <%
-        path = clean_path(path)
-        nodes = path.split('/')
-
-        traversed = []
-        for i in range(1, len(nodes)):
-            traversed.append('/'.join(nodes[:i]) + '/')
-
-        return traversed
-    %>
-</%def>
-
-<%def name="organization_name(size='long')">
-    <%
-        try:
-            return site.conf['organization_name'][size]
-        except KeyError:
-            return None
-    %>
-</%def>
-
-<%def name="clean_path(path=None)">
-    <%
-        if path == None:
-            return request.path
-
-        if '?' in path:                                 # Contains query
-            path = path.split('?')[0]
-        if not path.startswith('/'):                    # Might be relative
-            path = request.path + path
-
-        # TODO: Handle empty path nodes
-        # TODO: handle '..' in nodes
-
-        if not path.endswith('/'):
-            path = path.rsplit('/', 1)[0] + '/'         # Clip document portion
-
-        return path
-    %>
-</%def>
-
-<%def name="is_current_path(path)">
-    <%
-        path = clean_path(path)
-        return path == request.path
-    %>
-</%def>

@@ -1,7 +1,7 @@
-<%namespace name="page_info" file="/page/info.mako" />
+<%namespace name="title_utils" file="/title_utils.mako" />
 
-<%def name="simple(items=[], overrides={}, tooltips={}, element_class=None,
-    element_id=None)">
+<%def name="menu_simple(items=[], overrides={}, tooltips={},
+    element_class=None, element_id=None)">
     <%
         # Add in classes and IDs
         class_id = ''
@@ -23,7 +23,7 @@
         try:
             label = overrides[path]
         except:
-            label = page_info.page_title(path)
+            label = title_utils.title(path)
 
         title = ''
         if path in tooltips:
@@ -36,7 +36,7 @@
     <a${cls} href="${path}"${title}>${label}</a>
 </%def>
 
-<%def name="ul(items=[], overrides={}, tooltips={}, indications=[],
+<%def name="menu_ul(items=[], overrides={}, tooltips={}, indications=[],
     element_class=None, element_id=None, highlight_current=False)">
     <%
         # Add in classes and IDs
@@ -54,5 +54,11 @@
             <li><span>${indication}</span></li>
         % endfor
     </ul>
+</%def>
+
+<%def name="nav(items, overrides={})">
+    <nav>
+    ${menu_ul(items=items, overrides=overrides)}
+    </nav>
 </%def>
 

@@ -1,4 +1,4 @@
-<%namespace name="page_info" file="/page/info.mako" />
+<%namespace name="organization" file="/organization.mako" />
 
 <%!
     from datetime import date
@@ -15,7 +15,7 @@
 </%doc>
 <%
     if name == None:
-        name = page_info.organization_name()
+        name = organization.organization_name()
         if name == None:
             return ''
 
