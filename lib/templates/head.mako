@@ -1,4 +1,4 @@
-<%namespace name="title_utils" file="/title_utils.mako" />
+<%namespace name="title_utils" file="/title.mako" />
 <%namespace name="organization" file="/organization.mako" />
 <%namespace name="menu" file="/menu.mako" />
 

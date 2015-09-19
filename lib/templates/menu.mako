@@ -1,4 +1,4 @@
-<%namespace name="title_utils" file="/title_utils.mako" />
+<%namespace name="title_utils" file="/title.mako" />
 
 <%def name="menu_simple(items=[], overrides={}, tooltips={},
     element_class=None, element_id=None)">

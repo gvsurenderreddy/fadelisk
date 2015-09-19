@@ -1,6 +1,5 @@
 
-<%namespace name="path_utils" file="/path_utils.mako" />
-<%namespace name="title_utils" file="/title_utils.mako" />
+<%namespace name="path_utils" file="/path.mako" />
 
 <%!
     from fadelisk.conf import ConfYAML
@@ -12,16 +11,16 @@
         path = path_utils.clean_path(path)
 
         # Try to load page title configuration into cache
-        if 'page_title' not in cache['conf']:
+        if 'title' not in cache['conf']:
             try:
-                cache['conf']['page_title'] = ConfYAML(
-                    site.rel_path('conf', 'page_title.yaml'))
+                cache['conf']['title'] = ConfYAML(
+                    site.rel_path('conf', 'title.yaml'))
             except:
                 pass
 
         # Attempt to fetch title from cached configuration
         try:
-            return cache['conf']['page_title'][path]
+            return cache['conf']['title'][path]
         except:
             pass
 
@@ -31,7 +30,7 @@
 
         # Attempt to fetch from cache
         try:
-            return cache['data']['page_title'][path]
+            return cache['data']['title'][path]
         except:
             pass
 
@@ -47,9 +46,9 @@
         title = ' '.join(title_words)
 
         # Ensure page title cache structure, and add title
-        if 'page_title' not in cache['data']:
-            cache['data']['page_title'] = {}
-        cache['data']['page_title'][path] = title
+        if 'title' not in cache['data']:
+            cache['data']['title'] = {}
+        cache['data']['title'][path] = title
 
         return title
     %>
@@ -60,7 +59,7 @@
         traversed = path_utils.traversed_paths(path)
         if len(traversed) == 1:
             return "Home"
-        titles = [title_utils.title(p) for p in traversed[1:]]
+        titles = [title(p) for p in traversed[1:]]
 
         return separator.join(titles)
     %>
@@ -81,7 +80,7 @@
             if not place.startswith('/'):
                 trail.append(place)
                 continue
-            trail.append('<a href="%s">%s</a>' % (place, page_title(place)))
+            trail.append('<a href="%s">%s</a>' % (place, title(place)))
 
         return separator.join(trail)
     %>

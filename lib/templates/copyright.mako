@@ -4,7 +4,7 @@
     from datetime import date
 %>
 
-<%def name="declaration(year, name=None, use_group=False,
+<%def name="copyright_declaration(year, name=None, use_group=False,
     copyright_word='&copy;')">
 <%doc>
     year: year of first publication
