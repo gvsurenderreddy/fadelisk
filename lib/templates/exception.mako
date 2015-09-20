@@ -14,12 +14,12 @@
 <%def name="catch(func)">
     <%
         try:
-            func()
+            return capture(func)
         except:
             if site.conf.get('debug'):
-                fadelisk_exception()
+                return capture(fadelisk_exception)
             else:
-                internal_server_error()
+                return capture(internal_server_error)
     %>
 </%def>
 
