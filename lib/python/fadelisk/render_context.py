@@ -1,4 +1,6 @@
 
+from copy import deepcopy
+
 request_data_reset_values = {
     #-- For delivering media of other types, like image/png. Just
     #   pack up your data payload and request.setHeader your
@@ -69,7 +71,7 @@ class RequestContextMember(dict):
 
     def reset(self):
         self.clear()
-        self.update(self.initial_values)
+        self.update(deepcopy(self.initial_values))
 
 
 class RequestData(RequestContextMember):
