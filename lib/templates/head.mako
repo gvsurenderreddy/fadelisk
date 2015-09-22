@@ -20,16 +20,16 @@
 
 <%def name="stylesheets()">
     <%
-        stylesheets = list(site.conf.get('stylesheets', []))
-        stylesheets.extend(request_data.get('extra_stylesheets', []))
+        stylesheets = list(site.conf.get('stylesheets') or [])
+        stylesheets.extend(request_data.get('extra_stylesheets') or [])
 
-        screen_stylesheets = list(site.conf.get('screen_stylesheets', []))
+        screen_stylesheets = list(site.conf.get('screen_stylesheets') or [])
         screen_stylesheets.extend(request_data.get(
-            'extra_screen_stylesheets', []))
+            'extra_screen_stylesheets') or [])
 
-        print_stylesheets = list(site.conf.get('print_stylesheets', []))
+        print_stylesheets = list(site.conf.get('print_stylesheets') or [])
         print_stylesheets.extend(request_data.get(
-            'extra_print_stylesheets', []))
+            'extra_print_stylesheets') or [])
     %>
     % for stylesheet in stylesheets:
         <link rel="stylesheet" href="${stylesheet}" />
@@ -44,8 +44,8 @@
 
 <%def name="scripts()">
     <%
-        scripts = list(site.conf.get('scripts', []))
-        scripts.extend(request_data.get('extra_scripts', []))
+        scripts = list(site.conf.get('scripts') or [])
+        scripts.extend(request_data.get('extra_scripts') or [])
     %>
     % for script in scripts:
         <script src="${script}"></script>
@@ -54,8 +54,8 @@
 
 <%def name="local_fonts(uri='/fonts')">
     <%
-        fonts = list(site.conf.get('local_fonts', []))
-        fonts.extend(request_data.get('extra_local_fonts', []))
+        fonts = list(site.conf.get('local_fonts') or [])
+        fonts.extend(request_data.get('extra_local_fonts') or [])
         if not fonts:
             return ''
     %>
