@@ -1,5 +1,31 @@
 <%namespace name="title_utils" file="/title.mako" />
 
+<%def name="menu_ul(items=[], overrides={}, tooltips={}, indications=[],
+    element_class=None, element_id=None, highlight_current=False)">
+    <%
+        # Add in classes and IDs
+        class_id = ''
+        if element_class:
+            class_id += ' class="%s"' % element_class
+        if element_id:
+            class_id += ' id="%s"' % element_id
+    %>
+    <ul${class_id}>
+        % for item in items:
+            % if isinstance(item, list):
+                ${menu_ul(item, overrides=overrides, tooltips=tooltips,
+                          highlight_current=highlight_current)}
+            % else:
+                <li>${menu_button(item, overrides, tooltips,
+                                  highlight_current)}</li>
+            % endif
+        % endfor
+        % for indication in indications:
+            <li><span>${indication}</span></li>
+        % endfor
+    </ul>
+</%def>
+
 <%def name="menu_simple(items=[], overrides={}, tooltips={},
     element_class=None, element_id=None)">
     <%
@@ -34,26 +60,6 @@
             cls = ' class="current"'
     %>
     <a${cls} href="${path}"${title}>${label}</a>
-</%def>
-
-<%def name="menu_ul(items=[], overrides={}, tooltips={}, indications=[],
-    element_class=None, element_id=None, highlight_current=False)">
-    <%
-        # Add in classes and IDs
-        class_id = ''
-        if element_class:
-            class_id += ' class="%s"' % element_class
-        if element_id:
-            class_id += ' id="%s"' % element_id
-    %>
-    <ul${class_id}>
-        % for item in items:
-            <li>${menu_button(item, overrides, tooltips, highlight_current)}</li>
-        % endfor
-        % for indication in indications:
-            <li><span>${indication}</span></li>
-        % endfor
-    </ul>
 </%def>
 
 <%def name="nav(items, overrides={})">
