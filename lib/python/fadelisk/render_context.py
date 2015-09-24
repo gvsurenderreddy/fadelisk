@@ -67,7 +67,7 @@ class RenderContext(object):
 class RequestContextMember(dict):
     def __init__(self, initial_values):
         self.initial_values = initial_values
-        self.update(self.initial_values)
+        self.reset()
 
     def reset(self):
         self.clear()
@@ -77,6 +77,7 @@ class RequestContextMember(dict):
 class RequestData(RequestContextMember):
     def __init__(self):
         RequestContextMember.__init__(self, request_data_reset_values)
+
 
 
 class Cache(RequestContextMember):
