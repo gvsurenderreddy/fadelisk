@@ -43,7 +43,7 @@ class Application(Daemon):
         'server': 'fadelisk 1.0 (barndt)',
         'bind_address': '127.0.0.1',
         'listen_port': 1066,
-        'process_user': 'www-data',
+        'process_user': 'nobody',
         'log_level': 'warning',
         'site_collections': ['/srv/www/sites'],
         'directory_index': [ 'index.html', 'index.htm'],
