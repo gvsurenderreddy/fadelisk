@@ -22,9 +22,9 @@ class Lockfile(object):
         if not self.filename.endswith(".pid"):              # extension
             self.filename = self.filename + ".pid"
         if not self.filename.startswith('/'):               # full path
-            self.filename = '/var/lock/' + self.filename
+            self.filename = '/var/run/' + self.filename
 
-        if not self.filename.startswith('/var/lock'):       # restrict path
+        if not self.filename.startswith('/var/run/'):       # restrict path
             raise LockfileError("Lockfile path restricted: %s" %
                                 self.filename)
 

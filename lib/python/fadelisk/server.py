@@ -2,8 +2,18 @@
 import os
 import signal
 
-from twisted.internet import epollreactor
-epollreactor.install()
+try:
+    import platform
+    platform_sys = platform.system()
+    if platform_sys == 'Linux':
+        from twisted.internet import epollreactor
+        epollreactor.install()
+    elif platform_sys in ['FreeBSD', 'OpenBSD', 'Darwin']:
+        from twisted.internet import kqreactor
+        kqreactor.install()
+except:
+    pass
+
 from twisted.internet import reactor
 from twisted.web import resource, server, vhost
 
