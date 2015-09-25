@@ -5,7 +5,7 @@ import pwd
 import signal
 
 class Daemon(object):
-    def __init__(self, working_dir='/', umask=027, full_closure=False,
+    def __init__(self, working_dir='/', umask=0o27, full_closure=False,
                  stdin='/dev/null', stdout='/dev/null', stderr=None):
         self.working_dir = working_dir
         self.umask = umask
