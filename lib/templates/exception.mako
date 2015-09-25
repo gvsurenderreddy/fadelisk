@@ -26,6 +26,7 @@
 <%def name="internal_server_error()">
     <%
         request.setResponseCode(500)
+        request_data['flags']['no_title'] = True
     %>
     <h1>Internal Server Error</h1>
     The server encountered an error while rendering the page you requested.
@@ -33,6 +34,7 @@
 
 <%def name="fadelisk_exception()">
     <%
+        request_data['flags']['no_title'] = True
         tback = mako.exceptions.RichTraceback()
     %>
     <h1>${tback.errorname}: ${tback.message|h}</h1>
