@@ -1,3 +1,4 @@
+<%namespace name="path_utils" file="/path.mako" />
 <%namespace name="title_utils" file="/title.mako" />
 
 <%def name="menu_ul(items=[], overrides={}, tooltips={}, indications=[],
@@ -46,6 +47,7 @@
 <%def name="menu_button(path, overrides={}, tooltips={},
     highlight_current=False)">
     <%
+        path = path_utils.clean_path(path)
         try:
             label = overrides[path]
         except:
@@ -56,7 +58,7 @@
             title = ' title="%s"' % tooltips[path]
 
         cls = ''
-        if highlight_current and page_info.is_current_path(path):
+        if highlight_current and path_utils.is_current_path(path):
             cls = ' class="current"'
     %>
     <a${cls} href="${path}"${title}>${label}</a>
