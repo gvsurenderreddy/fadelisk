@@ -1,6 +1,8 @@
-#!/usr/bin/python -OO
+#!env python2.7
 
 """Application runner
+
+.. moduleauthor:: Patrick M. Jordan <patrick@fadelisk.org>
 
 To use this runner:
 
@@ -18,7 +20,7 @@ To use this runner:
 
 import sys
 from os.path import basename, dirname, realpath
-# sys.dont_write_bytecode = True
+sys.dont_write_bytecode = True
 
 
 class ApplicationNotFoundError(Exception): pass
@@ -50,8 +52,7 @@ class ApplicationRunner(object):
     def find_application(self):
         """Search for an Application class in the package namespace
 
-        Raises:
-            ApplicationNotFoundError: Application class could not be found
+        :raises: ApplicationNotFoundError
         """
         namespace = sys.modules[self.package_name]
 
