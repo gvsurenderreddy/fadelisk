@@ -34,9 +34,9 @@
 </%def>
 
 <%def name="stylesheets()">
-    ${stylesheets_of_type('all')}
-    ${stylesheets_of_type('screen')}
-    ${stylesheets_of_type('print')}
+    ${stylesheets_of_media('all')}
+    ${stylesheets_of_media('screen')}
+    ${stylesheets_of_media('print')}
 </%def>
 
 <%def name="scripts()">
