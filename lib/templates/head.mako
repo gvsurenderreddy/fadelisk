@@ -7,8 +7,7 @@
         <link rel="icon" href="/images/favicon.png" type="image/png" />
         <% site_name = site.conf.get('site_name', '') %>
         <title>
-            ${site_name}
-            ${': ' if site_name else ''}
+            ${site_name}${':' if site_name else ''}
             ${title_utils.breadcrumb_title()}
         </title>
         ${stylesheets()}
