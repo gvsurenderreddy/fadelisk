@@ -18,28 +18,25 @@
     ${'</head>'}
 </%def>
 
-<%def name="stylesheets()">
+<%def name="stylesheets_of_media(media='all')">
     <%
-        stylesheets = list(site.conf.get('stylesheets') or [])
-        stylesheets.extend(request_data.get('extra_stylesheets') or [])
+        main = 'stylesheets'
+        if media != 'all':
+            main = media + '_' + main
+        extra = 'extra_' + main
 
-        screen_stylesheets = list(site.conf.get('screen_stylesheets') or [])
-        screen_stylesheets.extend(request_data.get(
-            'extra_screen_stylesheets') or [])
-
-        print_stylesheets = list(site.conf.get('print_stylesheets') or [])
-        print_stylesheets.extend(request_data.get(
-            'extra_print_stylesheets') or [])
+        stylesheets = list(site.conf.get(main) or [])
+        stylesheets.extend(request_data.get(extra) or [])
     %>
     % for stylesheet in stylesheets:
         <link rel="stylesheet" href="${stylesheet}" />
     % endfor
-    % for stylesheet in screen_stylesheets:
-        <link rel="stylesheet" media="screen" href="${stylesheet}" />
-    % endfor
-    % for stylesheet in print_stylesheets:
-        <link rel="stylesheet" media="print" href="${stylesheet}" />
-    % endfor
+</%def>
+
+<%def name="stylesheets()">
+    ${stylesheets_of_type('all')}
+    ${stylesheets_of_type('screen')}
+    ${stylesheets_of_type('print')}
 </%def>
 
 <%def name="scripts()">
