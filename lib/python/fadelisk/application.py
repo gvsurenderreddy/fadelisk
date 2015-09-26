@@ -110,14 +110,13 @@ class Application(Daemon):
         """
         self.daemonize()
 
-        lock = Lockfile("fadelisk")
+        lock = Lockfile("fadelisk", user=self.conf['process_user'])
         try:
             lock.acquire()
-        except LockfileEstablishError:
-            sys.exit("Could not establish lock file")
         except LockfileLockedError:
             sys.exit("Lockfile present, process already running")
-        lock.chown_lockfile(self.conf['process_user'])
+        except:
+            sys.exit("Could not establish lock file")
 
         self.server = FadeliskServer(self)      # build reactor
         self.chuser(self.conf['process_user'])  # relinquish root

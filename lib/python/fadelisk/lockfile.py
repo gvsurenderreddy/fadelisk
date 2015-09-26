@@ -1,6 +1,9 @@
 
+from __future__ import print_function
+
 import os
 import pwd
+import grp
 import struct
 import fcntl
 import signal
@@ -14,39 +17,43 @@ class LockfileReleaseError(Exception): pass
 class LockfileKillError(Exception): pass
 
 class Lockfile(object):
-    def __init__(self, filename):
-        self.filename = filename
+    def __init__(self, dir_name, instance_name=None, user='nobody'):
+        self.dir_name = dir_name
+        if instance_name != None:
+            self.instance_name = instance_name
+        else:
+            self.instance_name = dir_name
+        self.user = user
+
+        self.path = os.path.join('/var/run', self.dir_name)
+        self.filename = os.path.join(self.path, self.instance_name) + '.pid'
+
         self.fd = None
         self.lock = None
-
-        if not self.filename.endswith(".pid"):              # extension
-            self.filename = self.filename + ".pid"
-        if not self.filename.startswith('/'):               # full path
-            self.filename = '/var/run/' + self.filename
-
-        if not self.filename.startswith('/var/run/'):       # restrict path
-            raise LockfileError("Lockfile path restricted: %s" %
-                                self.filename)
 
     def acquire(self):
         if self.fd:
             raise LockfileError("Lockfile %s already open this process" %
                                self.filename)
-        try:
-            if self.get_locking_process(self.filename):
-                raise LockfileLockedError(
-                    'Lock file already locked by PID %s' % pid)
-        except:
-            pass
-        try:
-            self.fd = os.open(self.filename, os.O_WRONLY | os.O_CREAT |
-                              os.O_TRUNC)
-        except Exception:
-            raise LockfileOpenError("Could not open lock file %s" %
-                                    self.filename)
+
+        pid = self.get_locking_process()
+        if pid:
+            raise LockfileLockedError(
+                'Lock file already locked by PID %s' % pid)
+
+        pwent = pwd.getpwnam(self.user)
+
+        if not os.path.exists(self.path):
+            os.mkdir(self.path, 0o775)
+        os.chown(self.path, pwent.pw_uid, pwent.pw_gid)
+
+        self.fd = os.open(self.filename, os.O_WRONLY | os.O_CREAT |
+                          os.O_TRUNC, 0o664)
+        os.fchown(self.fd, pwent.pw_uid, pwent.pw_gid)
+
         try:
             self.lock = fcntl.lockf(self.fd, fcntl.LOCK_EX | fcntl.LOCK_NB)
-        except Exception:
+        except:
             self.lock = None
             os.close(self.fd)
             self.fd = None
@@ -62,41 +69,37 @@ class Lockfile(object):
             fcntl.lockf(self.fd, fcntl.LOCK_UN)
         except Exception:
             raise LockfileReleaseError(
-                "Unable to unlock lockfile %s" % self.filename)
+                'Unable to unlock lockfile %s' % self.filename)
         os.close(self.fd)
-        self.remove_lockfile()
 
-    def kill_process(self):
-        pid = self.get_locking_process(self.filename)
+    def kill_process(self, sig=signal.SIGTERM):
+        if not os.path.exists(self.filename):
+            print('Process is not running')
+            return
 
-        # There was no lock on the file
+        pid = self.get_locking_process()
+
         if not pid:
-            self.remove_lockfile()
-            raise LockfileStaleError("Lockfile: stale lockfile")
+            try:
+                os.remove(self.filename)
+            except:
+                raise LockfileStaleError("Lockfile: stale lockfile")
+            return 0
 
         # This process is locking the file
         if pid == os.getpid():
-            raise LockfileKillError(
-                "Lockfile: would terminate this process")
+            raise LockfileKillError("Lockfile: would terminate this process")
 
-        os.kill(pid, signal.SIGTERM)
+        os.kill(pid, sig)
 
-    def get_locking_process(self, filename):
+    def get_locking_process(self):
+        if not os.path.exists(self.filename):
+            return 0
+
         pid = None
-        try:
-            with open(filename, "r") as lockfile:
-                flock_t = struct.pack('hhqqh', fcntl.F_WRLCK, 0, 0, 0, 0)
-                lock = fcntl.fcntl(lockfile, fcntl.F_GETLK, flock_t)
-                type_, whence, start, len_, pid = struct.unpack('hhqqh', lock)
-        except IOError:
-            raise LockfileOpenError('Lock file %s does not exist' % filename)
+        with open(self.filename, "r") as lockfile:
+            flock_t = struct.pack('hhqqh', fcntl.F_WRLCK, 0, 0, 0, 0)
+            lock = fcntl.fcntl(lockfile, fcntl.F_GETLK, flock_t)
+            type_, whence, start, len_, pid = struct.unpack('hhqqh', lock)
         return pid
-
-    def chown_lockfile(self, username):
-        pwent = pwd.getpwnam(username)
-        os.fchown(self.fd, pwent.pw_uid, pwent.pw_gid)
-
-    def remove_lockfile(self):
-        if os.path.exists(self.filename):
-            os.remove(self.filename)
 
