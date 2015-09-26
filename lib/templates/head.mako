@@ -1,14 +1,15 @@
 <%namespace name="title_utils" file="/title.mako" />
-<%namespace name="organization" file="/organization.mako" />
 <%namespace name="menu" file="/menu.mako" />
 
 <%def name="head()">
     ${'<head>'}
         <meta charset="utf-8" />
         <link rel="icon" href="/images/favicon.png" type="image/png" />
+        <% site_name = site.conf.get('site_name', '') %>
         <title>
-            ${': '.join([organization.organization_name(),
-                title_utils.breadcrumb_title()])}
+            ${site_name}
+            ${': ' if site_name else ''}
+            ${title_utils.breadcrumb_title()}
         </title>
         ${stylesheets()}
         ${local_fonts()}
@@ -18,25 +19,27 @@
     ${'</head>'}
 </%def>
 
+<%def name="stylesheets()">
+    ${stylesheets_of_media('all')}
+    ${stylesheets_of_media('screen')}
+    ${stylesheets_of_media('print')}
+</%def>
+
 <%def name="stylesheets_of_media(media='all')">
     <%
-        main = 'stylesheets'
-        if media != 'all':
-            main = media + '_' + main
+
+        if media == 'all':
+            main = 'stylesheets'
+        else:
+            main = media + '_stylesheets'
         extra = 'extra_' + main
 
         stylesheets = list(site.conf.get(main) or [])
         stylesheets.extend(request_data.get(extra) or [])
     %>
     % for stylesheet in stylesheets:
-        <link rel="stylesheet" href="${stylesheet}" />
+        <link rel="stylesheet" media="${media}" href="${stylesheet}" />
     % endfor
-</%def>
-
-<%def name="stylesheets()">
-    ${stylesheets_of_media('all')}
-    ${stylesheets_of_media('screen')}
-    ${stylesheets_of_media('print')}
 </%def>
 
 <%def name="scripts()">
