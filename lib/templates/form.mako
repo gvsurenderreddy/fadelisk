@@ -13,12 +13,14 @@
 ##:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::( form )
 
 <%def name="form(fields, values={}, error={}, 
-    form_class='', form_action='', http_method='post',
+    name=None, form_class='', form_action='', http_method='post',
     submit_label='Save', cancel_uri=None,
     wrap=True, buttonbar=True)">
     <%
         # Build the inner form.
         buff = []
+        if wrap:
+            buff.append('<div class="form">')
         for field in fields:
             if isinstance(field, list):
                 buff.append(capture(fieldset, field, values, error))
@@ -26,6 +28,8 @@
                 buff.append(capture(dispatch_field, field, values, error))
             elif isinstance(field, str):
                 buff.append(capture(explanatory, field))
+        if wrap:
+            buff.append('</div>')
         if buttonbar:
             buff.append(capture(form_buttonbar, submit_label, cancel_uri))
         content = ''.join(buff)
@@ -37,6 +41,8 @@
                 'action': form_action,
                 'class': form_class,
             }
+            if name:
+                attribs['name'] = name
             content = tag.build_tag('form', attribs, content)
     %>
     ${content}
