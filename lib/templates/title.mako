@@ -28,7 +28,7 @@
         if path == '/':
             return 'Home'
 
-        # Attempt to fetch from cache
+        # Attempt to fetch from data cache
         try:
             return cache['data']['title'][path]
         except:
@@ -58,7 +58,7 @@
     <%
         traversed = path_utils.traversed_paths(path)
         if len(traversed) == 1:
-            return "Home"
+            return title('/')
         titles = [title(p) for p in traversed[1:]]
 
         return separator.join(titles)
