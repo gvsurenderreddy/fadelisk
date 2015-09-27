@@ -7,7 +7,7 @@
 <%!
     import copy
     from xml.sax.saxutils import quoteattr
-    from bson.objectid import ObjectId
+#    from bson.objectid import ObjectId
 %>
 
 ##:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::( form )
@@ -455,8 +455,8 @@
                 this_node = this_node.setdefault(node, {})
             this_node[nodes[-1]] = values       # Values at bottom level
 
-        if 'id' in args:                        # TODO: Move to DB interface
-            data['_id'] = ObjectId(args['id'][0])
+#        if 'id' in args:                        # TODO: Move to DB interface
+#            data['_id'] = ObjectId(args['id'][0])
 
         return data
     %>
