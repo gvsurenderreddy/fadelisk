@@ -12,27 +12,33 @@
 
 ##:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::( form )
 
-<%def name="form(fields, values={}, error={}, 
-    name=None, form_class='', form_action='', http_method='post',
-    submit_label='Save', cancel_uri=None,
-    wrap=True, buttonbar=True)">
+<%def name="form(fields, values={}, error={}, name=None, form_class='',
+    form_action='', http_method='post', submit_label='Save', cancel_uri=None,
+    wrap=True, header=None, buttonbar=True)">
     <%
-        # Build the inner form.
-        buff = []
-        if wrap:
-            buff.append('<div class="form">')
+        buf = []
+        if header:
+            buf.append(tag.build_tag('div', {'class': 'header'},
+            content=header))
+
+        field_buf = []
         for field in fields:
             if isinstance(field, list):
-                buff.append(capture(fieldset, field, values, error))
+                field_buf.append(capture(fieldset, field, values, error))
             elif isinstance(field, dict):
-                buff.append(capture(dispatch_field, field, values, error))
+                field_buf.append(capture(dispatch_field, field, values, error))
             elif isinstance(field, str):
-                buff.append(capture(explanatory, field))
+                field_buf.append(capture(explanatory, field))
+
         if wrap:
-            buff.append('</div>')
+            buf.append(tag.build_tag('div', {'class': 'form'},
+                ''.join(field_buf)))
+        else:
+            buf.append(''.join(field_buf))
+
         if buttonbar:
-            buff.append(capture(form_buttonbar, submit_label, cancel_uri))
-        content = ''.join(buff)
+            buf.append(capture(form_buttonbar, submit_label, cancel_uri))
+        content = ''.join(buf)
 
         # Full form: wrap with tags.
         if wrap:
