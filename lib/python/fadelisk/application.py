@@ -1,5 +1,6 @@
 
 import sys
+import os
 from os.path import dirname, join, realpath
 
 from .daemon import Daemon
@@ -86,6 +87,7 @@ class Application(Daemon):
         """
         action = self.args.action[0]
 
+        self.check_superuser()
         self.build_dispatch_table()
         try:
             action = self.dispatch_table[action]
@@ -186,6 +188,10 @@ class Application(Daemon):
         # Build the stack of configurations.
         self.conf = ConfStack([application_conf, self.default_conf.copy()],
                                   options=vars(self.args))
+
+    def check_superuser(self):
+        if os.getuid():
+            sys.exit("Fadelisk must be run as superuser")
 
     def rel_path(self, *nodes):
         if nodes:
