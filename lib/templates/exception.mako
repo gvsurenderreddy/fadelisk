@@ -3,12 +3,6 @@
     import traceback
     import mako
     import string
-
-    try:
-        from mako.ext.pygmentplugin import syntax_highlight, \
-            pygments_html_formatter
-    except:
-        pygments_html_formatter = None
 %>
 
 <%def name="catch(func)">
@@ -63,7 +57,7 @@
         <div class="location">${filename}, line ${tback.lineno}:</div>
         <div class="container">
         % for index in range(first_line, last_line):
-            ${code_line(lines[index], index+1, tback.lineno, language="mako")}
+            ${code_line(lines[index], index+1, tback.lineno)}
         % endfor
         </div>
     </div>
@@ -76,9 +70,6 @@
         <%
             if not line:
                 continue
-
-            if pygments_html_formatter:
-                pygments_html_formatter.linenostart = lineno
         %>
         <div class="location">${filename}, line ${lineno}:</div>
         <div class="container">
@@ -88,38 +79,26 @@
     </div>
 </%def>
 
-<%def name="code_line(code, line, error_line=0, filename='', language=None)">
-    % if pygments_html_formatter:
-        <%
-            pygments_html_formatter.linenostart = line
-            if line == error_line:
-                pygments_html_formatter.cssclass += ' error'
-        %>
-        ${string.rstrip(code) | syntax_highlight(filename, language=language)}
-        <%
-            if line == error_line:
-                pygments_html_formatter.cssclass = (
-                        pygments_html_formatter.cssclass.split()[0])
-        %>
-    % else:
-        <%
-            error_class = 'error ' if line == error_line else ''
-        %>
-        <table class="syntax-highlightedtable">
-            <tr>
-                <td class="linenos">
-                    <div class="linenodiv">
-                        <pre>${line}</pre>
-                    </div>
-                </td>
-                <td class="code">
-                    <div class="${error_class}syntax-highlighted">
-                        <pre>${code | h}</pre>
-                    </div>
-                </td>
-            </tr>
-        </table>
-    % endif
+<%def name="code_line(code, line, error_line=0, filename='')">
+    <%
+        error_class = 'syntax-highlighted'
+        if line == error_line:
+            error_class += ' error'
+    %>
+    <table class="syntax-highlightedtable">
+        <tr>
+            <td class="linenos">
+                <div class="linenodiv">
+                    <pre>${line}</pre>
+                </div>
+            </td>
+            <td class="code">
+                <div class="${error_class}">
+                    <pre>${code | h}</pre>
+                </div>
+            </td>
+        </tr>
+    </table>
 </%def>
 
 <%def name="python_traceback()">
@@ -131,9 +110,6 @@
 
 <%def name="fadelisk_exception_style()">
     <style>
-        % if pygments_html_formatter:
-            ${pygments_html_formatter.get_style_defs()}
-        % endif
         #fadelisk-exception .location {
             padding: .2em .4em;
             background: rgba(0, 0, 0, .6);
