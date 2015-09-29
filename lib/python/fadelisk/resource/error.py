@@ -16,9 +16,14 @@ class ErrorResource(resource.Resource):
 
     def render(self, request):
         request.setResponseCode(self.response_code)
-        request_data['flags']['no_title_in_layout'] = True
         try:
-            return self.site.render_path(self.path, request)
+            template = self.site.get_template(self.path)
+            render_context = self.site.render_context
+            render_context.reset()
+            request_data = render_context.get_request_data()
+            request_data['flags']['no_title_in_layout'] = True
+            return template.render(site=self.site, request=request,
+                                   **self.site.render_context.get())
         except Exception as exc:
             self.site.app.log.error(exc)
             return self.error_content.get()
