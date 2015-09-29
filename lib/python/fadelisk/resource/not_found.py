@@ -3,7 +3,7 @@ from twisted.web import http
 
 from .error import ErrorResource
 
-class DocumentNotFoundResource(ErrorResource):
+class NotFoundResource(ErrorResource):
     def __init__(self, site):
         ErrorResource.__init__(self, site,
                                site.conf.get('error_page_404',

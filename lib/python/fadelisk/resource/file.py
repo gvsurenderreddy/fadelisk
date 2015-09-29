@@ -1,7 +1,7 @@
 
 from twisted.web.static import File, DirectoryLister
 
-from .document_not_found import DocumentNotFoundResource
+from .not_found import NotFoundResource
 
 class FileResource(File):
     def __init__(self, path, site):
@@ -9,7 +9,7 @@ class FileResource(File):
         self.path = path
         self.site = site
 
-        self.document_not_found_resource = DocumentNotFoundResource(self.site)
+        self.not_found_resource = NotFoundResource(self.site)
 
     def createSimilarFile(self, path):
         f = self.__class__(path, self.site)
@@ -28,5 +28,5 @@ class FileResource(File):
                                        self.contentTypes,
                                        self.contentEncodings,
                                        self.defaultType)
-        return self.document_not_found_resource
+        return self.not_found_resource
 

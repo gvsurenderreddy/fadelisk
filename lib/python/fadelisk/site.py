@@ -4,7 +4,7 @@ from mako.lookup import TemplateLookup
 
 from .resource import                   \
         InternalServerErrorResource,    \
-        DocumentNotFoundResource,       \
+        NotFoundResource,               \
         FileResource,                   \
         HTMLResource
 from .render_context import RenderContext
@@ -38,8 +38,8 @@ class FadeliskSite(object):
                 FileResource(self.rel_path(directory), self))
 
         #-- Build Error resources
-        self.document_not_found_resource = DocumentNotFoundResource(self)
-        self.resource.childNotFound = self.document_not_found_resource
+        self.not_found_resource = NotFoundResource(self)
+        self.resource.childNotFound = self.not_found_resource
         self.internal_server_error_resource = InternalServerErrorResource(self)
 
         #-- Build list of directories to use for template resolution
