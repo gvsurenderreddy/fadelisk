@@ -1,6 +1,7 @@
 
 import sys
 import os
+import time
 from os.path import dirname, join, realpath
 
 from .daemon import Daemon
@@ -101,7 +102,8 @@ class Application(Daemon):
         self.dispatch_table = {
             'start':    self.action_start,
             'stop':     self.action_stop,
-            'restart':  self.action_not_implemented,
+            'reload':   self.action_restart,
+            'restart':  self.action_restart,
         }
 
     def action_start(self):
@@ -139,6 +141,15 @@ class Application(Daemon):
             sys.exit("Lockfile stale, removing")
         except LockfileOpenError:
             sys.exit("No lockfile present")
+
+    def action_restart(self):
+        """Stop and start the server
+
+        Shuts the server down, pauses briefly, then spawns a new server
+        """
+        self.action_stop()
+        time.sleep(.5)
+        self.action_start()
 
     def action_not_implemented(self):
         """Unimplemented action message
