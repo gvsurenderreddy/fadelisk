@@ -61,7 +61,7 @@
         if highlight_current and path_utils.is_current_path(path):
             cls = ' class="current"'
     %>
-    <a${cls} href="${path}"${title}>${label}</a>
+    <a${cls} href="${path}"${title}>${label|h}</a>
 </%def>
 
 <%def name="nav(items, overrides={})">
