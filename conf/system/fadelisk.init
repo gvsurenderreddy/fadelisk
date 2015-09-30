@@ -1,0 +1,24 @@
+#!/bin/sh
+
+# FADELISK INIT SCRIPT: Copy to your /etc/init directory. Adjust the
+# path of the executable accordingly. On Debian-like Linux
+# distributions, you can make the necessary symlinks with:
+#     update-rc.d fadelisk defaults
+# On other distributions, you may have to create the links yourself.
+#
+# Note that on most modern Linux distributions, systemd is used to
+# start and stop system services. For systemd, use the fadelisk.service
+# file instead.
+
+### BEGIN INIT INFO
+# Provides:          fadelisk
+# Required-Start:    $network $local_fs $remote_fs $syslog
+# Required-Stop:     $network $local_fs $remote_fs $syslog
+# Default-Start:     2 3 4 5
+# Default-Stop:      0 1 6
+# Short-Description: Fadelisk Web Server
+# Description:       Init script for the Fadelisk Web Server
+### END INIT INFO
+
+/usr/local/sbin/fadelisk $@
+

@@ -1,0 +1,22 @@
+
+# FADELISK SYSTEMD SERVICE: Copy this file to 
+# /etc/systemd/system/multi-user.target.wants and adjust paths below
+# if needed.
+
+[Unit]
+Description=A templating web server based on Twisted Web and Mako
+After=syslog.target network.target remote-fs.target nss-lookup.target
+
+[Service]
+Type=forking
+PIDFile=/var/run/fadelisk/fadelisk.pid
+ExecStart=/usr/local/sbin/fadelisk start
+ExecReload=/usr/local/sbin/fadelisk reload
+ExecStop=/usr/local/sbin/fadelisk stop
+TimeoutStopSec=10
+KillMode=mixed
+
+[Install]
+WantedBy=multi-user.target
+
+# vim:ft=ini
