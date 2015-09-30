@@ -47,7 +47,8 @@ class FadeliskSite(object):
             self.rel_path('content'),
             self.rel_path('templates'),
         ]
-        template_paths.extend(self.app.conf.get('template_directories', []))
+        template_paths.extend(
+            self.app.conf.get('extra_template_directories', []))
         template_paths.extend([
             self.app.rel_path('lib', 'templates'),
             self.app.rel_path('lib', 'packages'),

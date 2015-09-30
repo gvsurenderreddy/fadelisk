@@ -1,48 +1,38 @@
 
-#== FADELISK SERVER CONFIGURATION
-#   If you need to change the defaults, copy this file to
-#   /etc/fadelisk/fadelisk.yaml or /etc/fadelisk.yaml
-#   and make changes below. If the defaults are adequate,
-#   Fadelisk will use the built-in defaults if this file
-#   is not present.
+# == FADELISK SERVER CONFIGURATION ==
+# Copy this file to /etc/fadelisk/fadelisk.yaml or /etc/fadelisk.yaml
+# and make any needed changes below. If this file is not present, the
+# server will use its built-in defaults, which match those listed below.
 
-#-- SITE COLLECTIONS: While a Fadelisk "site" is a directory containing 
-#   subdirectories of configuration files, content, and other data for
-#   a single web site, a "site collection" is a directory which contains
-#   one or more Fadelisk sites. When Fadelisk is started, each site
-#   collection is scanned for sites to bring online. It is recommended
-#   that you consider using the default location if you can. Placing
-#   services into /srv provides flexibility in directory layout, allows
-#   modularization of mounted file systems, make backups easier, and
-#   is compatible with the File Heirarchy Standard as observed on 
-#   modern systems.
-#   It is also suggested that the directory for each individual site be
-#   named with the canonical FQDN of that web host, or if each FQDN is
-#   equally canonical, the most commonly known name.
+# SITE COLLECTIONS: List any directories where you keep Fadelisk sites.
+# Note that these aren't the names of the site directories themselves,
+# such as "example.fadelisk.org", but the directory where
+# "example.fadelisk.org" is placed. You are strongly encouraged to use
+# the default (/srv/www/sites).
 #
-#   site_collections:
-#       - "/srv/www/sites"
+# site_collections:
+#     - "/srv/www/sites"
 
-#-- EXTRA LIBRARIES: Directories with other Python modules to be appended
-#   to sys.path
+# EXTRA PYTHON DIRECTORIES: Directories with other Python modules/packages to
+# be appended to sys.path
 #
-#   extra_libraries:
-#       - "/srv/www/lib/python"
+# extra_python_directories:
+#     - "/srv/www/lib/python"
 
-#-- TEMPLATES: Directories with heirarchies of mako templates. These will
-#   be searched in order for a template at a given path.
+# EXTRA TEMPLATE DIRECTORIES: Directories with heirarchies of mako templates.
+# These will be searched in order for a template at a given path.
 #
-#   template_directories:
-#       - "/srv/project/fadelisk/templates"
+# extra_template_directories:
+#     - "/srv/project/fadelisk/templates"
 
-#-- BIND ADDRESS:
-#   Address to listen on (a single address for now, except for the case of
-#   0.0.0.0, which binds the socket to all available interfaces.) Host names
-#   are allowed instead of addresses, but addresses are safer.
+# BIND ADDRESS:
+# Address to listen on (a single address for now, except for the case of
+# 0.0.0.0, which binds the socket to all available interfaces.) Host names
+# are allowed instead of addresses, but addresses are safer.
 #
-#   bind_address: "127.0.0.1"
+# bind_address: "127.0.0.1"
 
-#-- LISTEN PORT:
+# LISTEN PORT:
 #
-#   listen_port: "1066"
+# listen_port: "1066"
 

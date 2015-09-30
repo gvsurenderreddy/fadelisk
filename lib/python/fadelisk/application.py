@@ -50,8 +50,8 @@ class Application(Daemon):
         'site_collections': ['/srv/www/sites'],
         'directory_index': [ 'index.html', 'index.htm'],
         'stderr_file': None,
-        'extra_libraries': "/srv/www/lib/python"
-
+        'extra_python_directories': ['/srv/www/lib/python'],
+        'extra_template_directories': [],
     }
     """Default configuration: This built-in configuration is used if no
     configuration is found, and as a fallback for unspecified values.
@@ -75,6 +75,8 @@ class Application(Daemon):
         self.options = Options()
         self.args = self.options.get_args()
         self.load_conf()
+
+        sys.path.extend(self.conf.get('extra_python_directories', []))
 
         self.log.set_level(self.conf['log_level'])  # from final config
 
