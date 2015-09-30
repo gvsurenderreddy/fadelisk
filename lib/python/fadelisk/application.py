@@ -150,7 +150,6 @@ class Application(Daemon):
         Shuts the server down, pauses briefly, then spawns a new server
         """
         self.action_stop()
-        time.sleep(.5)
         self.action_start()
 
     def action_not_implemented(self):

@@ -7,6 +7,7 @@ import grp
 import struct
 import fcntl
 import signal
+import time
 
 class LockfileError(Exception): pass
 class LockfileOpenError(Exception): pass
@@ -15,6 +16,7 @@ class LockfileStaleError(Exception): pass
 class LockfileEstablishError(Exception): pass
 class LockfileReleaseError(Exception): pass
 class LockfileKillError(Exception): pass
+class LockfileKillTimeoutError(Exception): pass
 
 class Lockfile(object):
     def __init__(self, dir_name, instance_name=None, user='nobody'):
@@ -71,8 +73,9 @@ class Lockfile(object):
             raise LockfileReleaseError(
                 'Unable to unlock lockfile %s' % self.filename)
         os.close(self.fd)
+        os.remove(self.filename)
 
-    def kill_process(self, sig=signal.SIGTERM):
+    def kill_process(self, sig=signal.SIGTERM, wait=True):
         if not os.path.exists(self.filename):
             print('Process is not running')
             return
@@ -91,6 +94,14 @@ class Lockfile(object):
             raise LockfileKillError("Lockfile: would terminate this process")
 
         os.kill(pid, sig)
+
+        if wait:
+            for interval in range(100):
+                if not os.path.exists(self.filename):
+                    return
+                time.sleep(.1)
+            raise LockfileKillTimeoutError(
+                "Timeout while waiting for process to exit")
 
     def get_locking_process(self):
         if not os.path.exists(self.filename):
