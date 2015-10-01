@@ -86,7 +86,7 @@
         else:
             language = ''
         if language:
-            language = ' class="language-' + language + '"'
+            language = ' class="language-%s"' % language
     %>
 
     % if filename:
@@ -119,28 +119,6 @@
 
 <%def name="fadelisk_exception_style()">
     <style type="text/css" scoped>
-        #fadelisk-exception pre,
-        .token.operator {
-            margin: 0;
-            padding: 0;
-            background: none;
-        }
-
-        pre { font-size: 85%; }
-
-        table,
-        .python-traceback
-        {
-            background-color: hsla(0, 0%, 100%, .7);
-            width: 100%;
-            margin-bottom: 1em;
-            border-radius: .2em;
-        }
-
-        .python-traceback {
-            padding: .5em .7em;
-        }
-
         .header {
             padding: .2em .4em;
             background: rgba(0, 0, 0, .6);
@@ -148,9 +126,20 @@
             border-radius: .2em .2em 0 0;
         }
 
-        td {
-            border-radius: .2em;
+        table,
+        .python-traceback
+        {
+            background-color: hsla(0, 0%, 100%, .7);
+            width: 100%;
+            margin-bottom: 1em;
+            border-radius: 0 0 .2em .2em;
         }
+
+        tr:first-of-type td { padding-top: .5em }
+        tr:last-of-type { border-radius: 0 0 .2em .2em; }
+        tr:last-of-type td { padding-bottom: .5em }
+        tr:last-of-type td.line-number { border-radius: 0 0 0 .2em; }
+        tr:last-of-type td.code-number { border-radius: 0 0 .2em 0; }
 
         .line-number {
             width: 3em;
@@ -159,8 +148,24 @@
             background-color: hsla(0, 0%, 0%, .1);
         }
 
+        pre {
+            font-size: 85%;
+        }
+
+        #fadelisk-exception pre,
+        .token.operator {
+            margin: 0;
+            padding: 0;
+            background: none;
+        }
+
         .code {
             padding-left: .5em;
+            overflow: auto;
+        }
+
+        .python-traceback {
+            padding: .5em .7em;
         }
     </style>
 </%def>
