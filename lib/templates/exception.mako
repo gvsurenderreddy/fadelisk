@@ -32,9 +32,9 @@
         tback = mako.exceptions.RichTraceback()
     %>
     <h1>${tback.errorname}: ${tback.message|h}</h1>
-    ${fadelisk_exception_style()}
 
     <div id="fadelisk-exception">
+        ${fadelisk_exception_style()}
         ${code_sample(tback)}
         ${mako_stack_trace(tback)}
         ${python_traceback()}
@@ -118,48 +118,48 @@
 </%def>
 
 <%def name="fadelisk_exception_style()">
-    <style>
-        #fadelisk-exception pre[class*="language-"],
+    <style type="text/css" scoped>
+        #fadelisk-exception pre,
         .token.operator {
+            margin: 0;
+            padding: 0;
             background: none;
         }
 
-        #fadelisk-exception table,
-        #fadelisk-exception .python-traceback
+        pre { font-size: 85%; }
+
+        table,
+        .python-traceback
         {
-            background-color: hsla(0, 0%, 100%, .8);
+            background-color: hsla(0, 0%, 100%, .7);
             width: 100%;
             margin-bottom: 1em;
             border-radius: .2em;
         }
 
-        #fadelisk-exception .python-traceback {
+        .python-traceback {
             padding: .5em .7em;
         }
 
-        #fadelisk-exception pre {
-            margin: 0; padding: 0;
-        }
-
-        #fadelisk-exception .header {
+        .header {
             padding: .2em .4em;
             background: rgba(0, 0, 0, .6);
             color: #dde;
             border-radius: .2em .2em 0 0;
         }
 
-        #fadelisk-exception td {
+        td {
             border-radius: .2em;
         }
 
-        #fadelisk-exception .line-number {
+        .line-number {
             width: 3em;
             text-align: right;
             padding-right: .2em;
             background-color: hsla(0, 0%, 0%, .1);
         }
 
-        #fadelisk-exception .code {
+        .code {
             padding-left: .5em;
         }
     </style>
