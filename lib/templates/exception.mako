@@ -51,53 +51,62 @@
         filename = tback.records[-1][4]
         first_line = max(0, tback.lineno-4)
         last_line = min(len(lines), tback.lineno+5)
+
+        code = []
+        for line_num in range(first_line, last_line):
+            code.append({'line-number': line_num+1, 'code': lines[line_num]})
     %>
     <h2>Location in Template</h2>
-    <div class="code-sample">
-        <div class="location">${filename}, line ${tback.lineno}:</div>
-        <div class="container">
-        % for index in range(first_line, last_line):
-            ${code_line(lines[index], index+1, tback.lineno)}
-        % endfor
-        </div>
-    </div>
+    ${code_table(code, error_line=tback.lineno, filename=filename)}
 </%def>
 
 <%def name="mako_stack_trace(tback)">
     <h2>Mako Stack Trace</h2>
     <div class="fadelisk-stack-trace">
-    % for (filename, lineno, function, line) in tback.reverse_traceback:
-        <%
-            if not line:
-                continue
-        %>
-        <div class="location">${filename}, line ${lineno}:</div>
-        <div class="container">
-            ${code_line(line, lineno, filename=filename)}
-        </div>
+    % for (filename, line_num, func, code) in tback.reverse_traceback:
+        ${code_table({'line-number': line_num, 'code': code }, filename)}
     % endfor
     </div>
 </%def>
 
-<%def name="code_line(code, line, error_line=0, filename='')">
+<%def name="code_table(code, filename='', error_line=0)">
     <%
-        error_class = 'syntax-highlighted'
-        if line == error_line:
-            error_class += ' error'
+        if isinstance(code, dict):
+            code = [code]
+
+        if error_line:
+            line_indication = ', line %s' % error_line
+        else:
+            line_indication = ''
+
+        if filename.endswith('.html') or filename.endswith('.htm'):
+            language = 'mako'
+        elif filename.endswith('.py'):
+            language = 'python'
+        else:
+            language = ''
+        if language:
+            language = ' class="language-' + language + '"'
     %>
-    <table class="syntax-highlightedtable">
-        <tr>
-            <td class="linenos">
-                <div class="linenodiv">
-                    <pre>${line}</pre>
-                </div>
-            </td>
-            <td class="code">
-                <div class="${error_class}">
-                    <pre>${code | h}</pre>
-                </div>
-            </td>
-        </tr>
+
+    % if filename:
+    <div class="header">
+        ${filename}${line_indication}:
+    </div>
+    % endif
+
+    <table>
+        % for line in code:
+            <% line_num = line['line-number'] %>
+            <tr>
+                <td class="line-number">
+                    ${line_num}
+                </td>
+                <td class="code${' error' if error_line == line_num else ''}">
+                    <pre><code${language}>${line['code'] |h}</code></pre>
+                </td>
+            </tr>
+        % endfor
     </table>
 </%def>
 
@@ -110,41 +119,48 @@
 
 <%def name="fadelisk_exception_style()">
     <style>
-        #fadelisk-exception .location {
+        #fadelisk-exception pre[class*="language-"],
+        .token.operator {
+            background: none;
+        }
+
+        #fadelisk-exception table,
+        #fadelisk-exception .python-traceback
+        {
+            background-color: hsla(0, 0%, 100%, .8);
+            width: 100%;
+            margin-bottom: 1em;
+            border-radius: .2em;
+        }
+
+        #fadelisk-exception .python-traceback {
+            padding: .5em .7em;
+        }
+
+        #fadelisk-exception pre {
+            margin: 0; padding: 0;
+        }
+
+        #fadelisk-exception .header {
             padding: .2em .4em;
             background: rgba(0, 0, 0, .6);
             color: #dde;
             border-radius: .2em .2em 0 0;
         }
-        #fadelisk-exception .container,
-        #fadelisk-exception .python-traceback {
-            background-color: rgba(240, 240, 240, .7);
-            border-radius: 0 0 .2em .2em;
-        }
-        #fadelisk-exception .fadelisk-stack-trace .container {
-            margin-bottom: 1em;
-        }
-        #fadelisk-exception .python-traceback {
+
+        #fadelisk-exception td {
             border-radius: .2em;
-            padding: .5em 1em;
         }
-        #fadelisk-exception pre { margin: 0; }
-        #fadelisk-exception .syntax-highlighted  {
-            background: none;
-            padding: 0 .2em;
-        }
-        #fadelisk-exception .linenos {
-            background: rgba(0, 0, 0, .1);
-            min-width: 2.5em;
+
+        #fadelisk-exception .line-number {
+            width: 3em;
             text-align: right;
-            padding: 2px .3em 2px 2px;
+            padding-right: .2em;
+            background-color: hsla(0, 0%, 0%, .1);
         }
+
         #fadelisk-exception .code {
-            background-color: rgba(255, 255, 255, .7);
-            width: 100%;
-        }
-        #fadelisk-exception .error {
-            background-color: rgba(255, 0, 0, .2);
+            padding-left: .5em;
         }
     </style>
 </%def>
