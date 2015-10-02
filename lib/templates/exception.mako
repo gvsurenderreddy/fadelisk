@@ -63,9 +63,10 @@
 <%def name="mako_stack_trace(tback)">
     <h2>Mako Stack Trace</h2>
     <div class="fadelisk-stack-trace">
-    % for (filename, line_num, func, code) in tback.reverse_traceback:
-        ${code_table({'line-number': line_num, 'code': code }, filename)}
-    % endfor
+    <%
+        for (filename, line_num, func, code) in tback.reverse_traceback:
+            code_table({'line-number': line_num, 'code': code }, filename)
+    %>
     </div>
 </%def>
 
