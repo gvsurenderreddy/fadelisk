@@ -80,14 +80,14 @@
         else:
             line_indication = ''
 
-        if filename.endswith('.html') or filename.endswith('.htm'):
-            language = 'mako'
-        elif filename.endswith('.py'):
-            language = 'python'
-        else:
-            language = ''
-        if language:
-            language = ' class="language-%s"' % language
+        language = ''
+        if filename: 
+            if filename.endswith('.html') or filename.endswith('.htm'):
+                language = 'mako'
+            elif filename.endswith('.py'):
+                language = 'python'
+            if language:
+                language = ' class="language-%s"' % language
     %>
 
     % if filename:
