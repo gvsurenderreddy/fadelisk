@@ -65,7 +65,7 @@
     %>
 </%def>
 
-<%def name="breadcrumbs(traversed=None, path=None, separator=' / ')">
+<%def name="breadcrumbs(traversed=None, path=None, separator=' &rarr; ')">
     <%
         if not path:
             path = request.path
@@ -79,8 +79,10 @@
         for place in traversed:
             if not place.startswith('/'):
                 trail.append(place)
-                continue
-            trail.append('<a href="%s">%s</a>' % (place, title(place)))
+            elif place == request.path:
+                trail.append(title(place))
+            else:
+                trail.append('<a href="%s">%s</a>' % (place, title(place)))
 
         return separator.join(trail)
     %>
