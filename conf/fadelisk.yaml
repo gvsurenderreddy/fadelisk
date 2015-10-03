@@ -4,6 +4,40 @@
 # and make any needed changes below. If this file is not present, the
 # server will use its built-in defaults, which match those listed below.
 
+# BIND ADDRESS: Address to listen on (a single address for now, except
+# for the case of 0.0.0.0, which binds the socket to all available
+# interfaces.)
+#
+# bind_address: '127.0.0.1'
+
+# LISTEN PORT: Port for the listening socket. Set to 80 for a stand-alone
+# installation.
+#
+# listen_port: 1066
+
+# PROCESS USER: The user under which the server will be run. For safety,
+# this user should have minimal access to the host system. Never use
+# 'root' or any user that has write access to your sites.
+#
+# process_user: 'nobody'
+
+# LOG LEVEL: Possible levels: error, warning, info, debug
+#
+# log_level: 'warning'
+
+# SERVER ID: The name of the server software returned in response headers.
+#
+# server: 'fadelisk/1.0'
+
+# DIRECTORY INDEX: When a directory path is requested, these document
+# names will be sought in order. This should be the normal way that
+# documents are served (a named directory with an index inside it) so
+# that site implementation is generic and hidden.
+#
+# directory_index:
+#     - 'index.html'
+#     - 'index.htm'
+
 # SITE COLLECTIONS: List any directories where you keep Fadelisk sites.
 # Note that these aren't the names of the site directories themselves,
 # such as "example.fadelisk.org", but the directory where
@@ -13,26 +47,15 @@
 # site_collections:
 #     - "/srv/www/sites"
 
-# EXTRA PYTHON DIRECTORIES: Directories with other Python modules/packages to
-# be appended to sys.path
+# EXTRA PYTHON DIRECTORIES: Directories with other Python
+# modules/packages to be appended to sys.path
 #
-# extra_python_directories:
-#     - "/srv/www/lib/python"
+# extra_python_directories: - "/srv/www/lib/python"
 
-# EXTRA TEMPLATE DIRECTORIES: Directories with heirarchies of mako templates.
-# These will be searched in order for a template at a given path.
+# EXTRA TEMPLATE DIRECTORIES: Directories with heirarchies of mako
+# templates. Template directories are searched in order for a template
+# at a given path. Directories specified here come AFTER template
+# directories in sites, and BEFORE the built-in templates.
 #
-# extra_template_directories:
-#     - "/srv/project/fadelisk/templates"
-
-# BIND ADDRESS:
-# Address to listen on (a single address for now, except for the case of
-# 0.0.0.0, which binds the socket to all available interfaces.) Host names
-# are allowed instead of addresses, but addresses are safer.
-#
-# bind_address: "127.0.0.1"
-
-# LISTEN PORT:
-#
-# listen_port: "1066"
+# extra_template_directories: - "/srv/project/fadelisk/templates"
 
