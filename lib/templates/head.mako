@@ -15,6 +15,7 @@
         ${google_fonts()}
         ${scripts()}
         ${rss_feed()}
+        ${extra_head_content()}
     ${'</head>'}
 </%def>
 
@@ -81,5 +82,9 @@
 <%def name="rss_feed(uri='/rss/', title='RSS Feed')">
     <link rel="alternate" type="application/rss+xml" title="${title}"
           href="${uri}" /> 
+</%def>
+
+<%def name="extra_head_content()">
+    ${''.join(request_data.get('extra_head_content', []))}
 </%def>
 
