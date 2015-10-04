@@ -8,7 +8,7 @@
         <% site_name = site.conf.get('site_name', '') %>
         <title>
             ${site_name}${':' if site_name else ''}
-            ${title_utils.breadcrumb_title()}
+            ${title_utils.breadcrumbs(no_links=True, no_home_link=True)}
         </title>
         ${stylesheets()}
         ${local_fonts()}
