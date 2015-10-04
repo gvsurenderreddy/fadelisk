@@ -66,7 +66,7 @@
 </%def>
 
 <%def name="breadcrumbs(traversed=None, path=None, separator=' &rarr; ',
-    no_home_link=False)">
+    no_home_link=False, maximum=0, ellipsis_string='...', omit_ellipsis=False)">
     <%
         if not path:
             path = request.path
@@ -79,8 +79,14 @@
         if no_home_link and len(traversed) > 1:
             traversed = traversed[1:]
 
+        orig_len = len(traversed)
+        if maximum:
+            num = min(orig_len, maximum)
+            traversed = traversed[-num-1:]
 
         trail = []
+        if len(traversed) != orig_len and not omit_ellipsis:
+            trail.append(ellipsis_string)
         for place in traversed:
             if not place.startswith('/'):
                 trail.append(place)
