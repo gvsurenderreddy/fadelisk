@@ -3,9 +3,13 @@ from __future__ import with_statement
 
 import os
 import sys
-import yaml
 import json
 import threading
+import yaml
+try:
+    from yaml import CLoader as YAMLLoader
+except ImportError:
+    from yaml import YAMLLoader
 
 class ConfNotFoundError(Exception): pass
 class ConfFormatError(Exception): pass
@@ -82,7 +86,7 @@ class ConfYAML(ConfDynamicDict):
         mtime = os.stat(self.filename).st_mtime
         if mtime != self.timestamp:
             with open(self.filename) as yaml_file:
-                data = yaml.load(yaml_file, Loader=yaml.CLoader) or {}
+                data = yaml.load(yaml_file, Loader=YAMLLoader) or {}
             if not isinstance(data, dict):
                 raise ConfFormatError('ConfYAML target must be a dictionary')
             self._replace(data)
