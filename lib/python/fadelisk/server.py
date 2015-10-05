@@ -8,7 +8,7 @@ try:
     if platform_sys == 'Linux':
         from twisted.internet import epollreactor
         epollreactor.install()
-    elif platform_sys in ['FreeBSD', 'OpenBSD', 'Darwin']:
+    elif platform_sys in ['OpenBSD']:
         from twisted.internet import kqreactor
         kqreactor.install()
 except:
