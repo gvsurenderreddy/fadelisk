@@ -9,7 +9,7 @@ import yaml
 try:
     from yaml import CLoader as YAMLLoader
 except ImportError:
-    from yaml import YAMLLoader
+    from yaml import Loader as YAMLLoader
 
 class ConfNotFoundError(Exception): pass
 class ConfFormatError(Exception): pass
