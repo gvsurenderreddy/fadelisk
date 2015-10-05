@@ -37,11 +37,9 @@ class Lockfile(object):
         if self.fd:
             raise LockfileError("Lockfile %s already open this process" %
                                self.filename)
-
-        pid = self.get_locking_process()
-        if pid:
+        if self.has_exlock():
             raise LockfileLockedError(
-                'Lock file already locked by PID %s' % pid)
+                'Lock file already locked by PID %s' % self.get_pid())
 
         pwent = pwd.getpwnam(self.user)
 
@@ -76,13 +74,12 @@ class Lockfile(object):
         os.remove(self.filename)
 
     def kill_process(self, sig=signal.SIGTERM, wait=True):
-        if not os.path.exists(self.filename):
+        pid = self.get_pid()
+        if not pid:
             print('Process is not running')
             return
 
-        pid = self.get_locking_process()
-
-        if not pid:
+        if not self.has_exlock():
             try:
                 os.remove(self.filename)
             except:
@@ -103,14 +100,20 @@ class Lockfile(object):
             raise LockfileKillTimeoutError(
                 "Timeout while waiting for process to exit")
 
-    def get_locking_process(self):
-        if not os.path.exists(self.filename):
-            return 0
+    def has_exlock(self):
+        try:
+            with open(self.filename, "r") as lockfile:
+                try:
+                    lock = fcntl.lockf(lockfile, fcntl.LOCK_EX | fcntl.LOCK_NB)
+                except:
+                    return True
+        except:
+            return False
 
-        pid = None
-        with open(self.filename, "r") as lockfile:
-            flock_t = struct.pack('hhqqh', fcntl.F_WRLCK, 0, 0, 0, 0)
-            lock = fcntl.fcntl(lockfile, fcntl.F_GETLK, flock_t)
-            type_, whence, start, len_, pid = struct.unpack('hhqqh', lock)
-        return pid
+    def get_pid(self):
+        try:
+            with open(self.filename, "r") as lockfile:
+                return int(lockfile.read())
+        except:
+            return 0
 
