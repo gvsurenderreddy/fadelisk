@@ -1,6 +1,6 @@
 
-import sys
 import os
+import sys
 import time
 from os.path import dirname, join, realpath
 
@@ -26,12 +26,11 @@ class Application(Daemon):
     """The name of the configuration file."""
 
     conf_file_locations = [
+        'conf',                     # Self-contained (relative to package)
+        '/srv/www/conf',            # FHS Service-centric locations
+        '/srv/www/conf/fadelisk',
         '/etc/fadelisk',            # Ubuntu, Debian, Linux Mint, Knoppix
-        '/etc',                     # Red Hat, SuSE
-        '/srv/www/etc',             # FHS Service-centric location
-        # These values are interpolated at runtime.
-        '@PARENT@/etc/fadelisk',    # Self-contained
-        '@PARENT@',                 # Distribution (from checkout or archive)
+        '/etc',                     # Red Hat, CentOS, [Open]SuSE
     ]
     """If no configuration file is specified on the command line, this
     built-in list of locations is searched in order. The first
@@ -180,33 +179,27 @@ class Application(Daemon):
                                       ignore_changes=True)
         else:
             # Otherwise, let the hunter try to find it.
-            # Compute script location and interpolate into list of locations.
-            script_path = realpath(sys.argv[0])
-            script_dir = realpath(dirname(script_path))
-            script_parent = realpath(join(script_dir, '..'))
             locations = []
-            for location in Application.conf_file_locations:
-                if location.startswith('@PARENT@'):
-                    location = script_parent + location[8:]
+            for location in self.conf_file_locations:
+                if not location.startswith('/'):
+                    location = join(self.archive_path, location)
                 locations.append(location)
             try:
                 application_conf = ConfHunterFactory(ConfYAML,
-                                                     self.conf_file_name,
-                                                     locations,
-                                                     ignore_changes=True)
+                         self.conf_file_name, locations, ignore_changes=True)
             except ConfNotFoundError:
                 application_conf = {}
 
         # Build the stack of configurations.
-        self.conf = ConfStack([application_conf, self.default_conf.copy()],
-                                  options=vars(self.args))
+        self.conf = ConfStack([application_conf, self.default_conf],
+                              options=vars(self.args))
 
     def check_superuser(self):
         if os.getuid():
             sys.exit("Fadelisk must be run as superuser")
 
     def rel_path(self, *nodes):
-        if nodes:
-            return join(self.archive_path, *nodes)
-        return self.archive_path
+        if not nodes:
+            return self.archive_path
+        return join(self.archive_path, *nodes)
 
