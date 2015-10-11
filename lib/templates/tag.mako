@@ -6,7 +6,7 @@
     from xml.sax.saxutils import quoteattr
 %>
 
-<%def name="build_tag(tag='', attribs={}, content=None, void=False)">
+<%def name="build_tag(tag, attribs={}, content=None, void=False)">
     <%
         items = ['<%s' % tag]
         if attribs:
