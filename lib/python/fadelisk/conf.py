@@ -207,7 +207,10 @@ class ConfStack(object):
 
 
 def ConfHunterFactory(cls, filename, locations=None, ignore_changes=False):
-    if locations == None:
+    if not locations:
+        lib_dir = dirname(realpath(__file__))
+        self.archive_path = realpath(join(lib_dir, '../../..'))
+
         script_parent = os.path.join([os.path.dirname(sys.argv[0]), '..'])
         locations = [os.path.join(script_parent, 'conf'), script_parent, '.']
 
