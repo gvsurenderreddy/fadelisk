@@ -6,9 +6,9 @@
     from xml.sax.saxutils import quoteattr
 %>
 
-<%def name="build_tag(tag, attribs={}, content=None, void=False)">
+<%def name="build_tag(name, attribs={}, content=None, void=False)">
     <%
-        items = ['<%s' % tag]
+        items = ['<%s' % name]
         if attribs:
             items.append(' ')
             items.append(build_attribs(attribs))
@@ -16,7 +16,7 @@
             if void:
                 items.append(' /')
         else:
-            items.append('>%s</%s' % (content, tag))
+            items.append('>%s</%s' % (content, name))
         items.append('>')
         return ''.join(items)
     %>
