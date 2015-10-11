@@ -19,6 +19,12 @@
     %>
 </%def>
 
+<%def name="clean_paths(paths=[])">
+    <%
+        return [clean_path(path) for path in paths]
+    %>
+</%def>
+
 <%def name="is_current_path(path)">
     <%
         return clean_path(path) == request.path
