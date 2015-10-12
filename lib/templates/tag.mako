@@ -6,7 +6,8 @@
     from xml.sax.saxutils import quoteattr
 %>
 
-<%def name="build_tag(name, attribs={}, content=None, void=False)">
+<%def name="build_tag(name, attribs={}, content=None, void=True)"
+    filter="n,trim">
     <%
         items = ['<%s' % name]
         if attribs:
@@ -22,7 +23,8 @@
     %>
 </%def>
 
-<%def name="build_attribs(attribs)">
+<%def name="build_attribs(attribs)"
+    filter="n,trim">
     <%
         items = []
         for attrib, value in attribs.iteritems():
