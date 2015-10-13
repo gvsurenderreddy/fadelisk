@@ -6,7 +6,8 @@
     leave_lower = 'a an the and but or for nor on at to from by'.split()
 %>
 
-<%def name="title(path=None)">
+<%def name="title(path=None)"
+    filter="n,trim">
     <%
         path = path_utils.clean_path(path)
 
@@ -56,7 +57,8 @@
 
 <%def name="breadcrumbs(traversed=None, path=None, no_links=False,
     separator=' &rarr; ', no_home_link=False,
-    maximum=0, ellipsis_string='...', omit_ellipsis=False)">
+    maximum=0, ellipsis_string='...', omit_ellipsis=False)"
+    filter="n,trim">
     <%
         if not path:
             path = request.path
