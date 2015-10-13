@@ -1,37 +1,38 @@
 
-<%def name="clean_path(path=None)">
+<%def name="clean_path(path=None)"
+    filter="n,trim">
     <%
-        if path == None:
-            return request.path
-
-        if '?' in path:                                 # Contains query
-            path = path.split('?')[0]
-        if not path.startswith('/'):                    # Might be relative
-            path = request.path + path
-
         # TODO: Handle empty path nodes
         # TODO: handle '..' in nodes
 
-        if not path.endswith('/'):
-            path = path.rsplit('/', 1)[0] + '/'         # Clip document portion
+        if isinstance(path, list):
+            return [clean_path(p) for p in path]
+
+        if path == None:
+            return request.path
+
+        if '#' in path:                             # Strip fragment
+            path = path.split('#')[0]
+        if '?' in path:                             # Strip query
+            path = path.split('?')[0]
+        if not path.endswith('/'):                  # Remove document portion
+            path = path.rsplit('/', 1)[0] + '/'
+        if not path.startswith('/'):                # Relative
+            path = request.path + path
 
         return path
     %>
 </%def>
 
-<%def name="clean_paths(paths=[])">
-    <%
-        return [clean_path(path) for path in paths]
-    %>
-</%def>
-
-<%def name="is_current_path(path)">
+<%def name="is_current_path(path)"
+    filter="n,trim">
     <%
         return clean_path(path) == request.path
     %>
 </%def>
 
-<%def name="traversed_paths(path=None)">
+<%def name="traversed_paths(path=None)"
+    filter="n,trim">
     <%
         path = clean_path(path)
         nodes = path.split('/')
