@@ -1,18 +1,21 @@
 
 import os
 import signal
+import platform
 
-try:
-    import platform
-    platform_sys = platform.system()
-    if platform_sys == 'Linux':
-        from twisted.internet import epollreactor
-        epollreactor.install()
-    elif platform_sys in ['OpenBSD']:
-        from twisted.internet import kqreactor
-        kqreactor.install()
-except:
-    pass
+# Mapping of fast reactors and the systems that support them
+fast_reactors = {
+    'epollreactor': ['Linux'],
+    'kqueuereactor': ['OpenBSD'],
+}
+
+# Import a faster reactor, if one is available
+platform_sys = platform.system()
+for fast_reactor, platform_systems in fast_reactors.iteritems():
+    if platform.system() in platform_systems:
+        tw_inet = __import__('twisted.internet', fromlist=[fast_reactor])
+        tw_inet.__dict__[fast_reactor].install()
+        break
 
 from twisted.internet import reactor
 from twisted.web import resource, server, vhost
