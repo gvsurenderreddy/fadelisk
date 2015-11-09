@@ -25,37 +25,33 @@ from .site import FadeliskSite
 from .resource import SiteNotFoundResource
 
 
-class CustomServerSite(server.Site):
-    def __init__(self, resource, app_conf={}):
-        server.Site.__init__(self, resource)
-        self.server_header = app_conf.get('server_header', 'fadelisk/1.0')
-
-    def getResourceFor(self, request):
-        request.setHeader('server', self.server_header)
-        return server.Site.getResourceFor(self, request)
-
-
-class FadeliskServer(object):
+class FadeliskServer(server.Site):
     def __init__(self, app):
         self.app = app
-        self.sites = []
 
         self.vhost = vhost.NameVirtualHost()
+        server.Site.__init__(self, self.vhost)
+
         self.vhost.default=SiteNotFoundResource(self.app)
         self.gather_sites()
-        self.ubersite = CustomServerSite(self.vhost, app.conf)
 
-        reactor.listenTCP(self.app.conf['listen_port'], self.ubersite,
-                          interface=self.app.conf['bind_address'])
+        self.server_header = app.conf.get('server_header', 'fadelisk/1.0')
+
+        reactor.listenTCP(app.conf['listen_port'], self,
+                          interface=app.conf['bind_address'])
 
     def run(self):
         signal.signal(signal.SIGTERM, self.stop)
         reactor.run()
 
-    def stop(self, signum, frame):
+    def stop(self):
         reactor.stop()
 
+    def stop_on_signal(self, signum, frame):
+        self.stop()
+
     def gather_sites(self):
+        self.sites = []
         for collection in self.app.conf['site_collections']:
             if not os.path.exists(collection):
                 continue
@@ -121,4 +117,8 @@ class FadeliskServer(object):
                                           (alias, site.fqdn))
         if not self.sites:
             self.app.log.warning('No sites could be loaded.')
+
+    def getResourceFor(self, request):
+        request.setHeader('server', self.server_header)
+        return server.Site.getResourceFor(self, request)
 
