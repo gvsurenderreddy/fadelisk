@@ -1,7 +1,10 @@
 
+from __future__ import print_function
+
 import os
 import sys
 import time
+from operator import itemgetter
 from os.path import dirname, join, realpath
 
 from .daemon import Daemon
@@ -71,7 +74,7 @@ class Application(Daemon):
         self.log.set_level(self.default_conf['log_level'])  # from defaults
         self.log.stderr_on()
 
-        self.options = Options()
+        self.options = Options(self)
         self.args = self.options.get_args()
         self.load_conf()
 
@@ -193,6 +196,19 @@ class Application(Daemon):
         # Build the stack of configurations.
         self.conf = ConfStack([application_conf, self.default_conf],
                               options=vars(self.args))
+
+    def show_configuration(self):
+        print("Configuration file name:\n    %s" % self.conf_file_name)
+        print("\nConfiguration file locations:")
+        for location in self.conf_file_locations:
+            if location.startswith('/'):
+                print("    %s" % location)
+            else:
+                print("    {package directory}/%s" % location)
+        print("\nDefault Configuration:")
+        for option, value in sorted(self.default_conf.items(),
+                                    key=itemgetter(0)):
+            print('    %s: %s' % (option, value))
 
     def check_superuser(self):
         if os.getuid():

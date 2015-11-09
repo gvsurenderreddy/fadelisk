@@ -1,5 +1,17 @@
 
-from argparse import ArgumentParser
+import argparse
+import sys
+
+class ShowDefaultsAction(argparse.Action):
+    def __init__(self, option_strings, dest, help=None, **kwargs):
+        argparse.Action.__init__(self, option_strings, dest, nargs=0,
+                                 help=help)
+        self.app = kwargs['app']
+
+    def __call__(self, parser, namespace, values, option_string=None):
+        self.app.show_configuration()
+        sys.exit()
+
 
 class Options(object):
     """Command-line options
@@ -7,11 +19,12 @@ class Options(object):
     Handles building of command-line parser using argparse, including
     uage info. Parses arguments and stores the results.
     """
-    def __init__(self):
+    def __init__(self, app):
         """Initializer
 
         Ready the command-line parser and parse the arguments.
         """
+        self.app = app
         self.build_parser()
         self.args = self.parser.parse_args()
 
@@ -20,7 +33,7 @@ class Options(object):
 
         Construct the command-line parser and usage info.
         """
-        self.parser = ArgumentParser(
+        self.parser = argparse.ArgumentParser(
             prog='fadelisk',
             description='A web server where all pages are templates.',
         )
@@ -36,8 +49,11 @@ class Options(object):
                                  help='run server as this user')
         self.parser.add_argument('-o', '--errout', dest='stderr_file',
                                  help='direct stderr to this file')
-        self.parser.add_argument('--server_header', dest='server_header',
+        self.parser.add_argument('--server-header', dest='server_header',
                                  help='server name/version for HTTP headers')
+        self.parser.add_argument('--show-defaults',
+                                 action=ShowDefaultsAction, app=self.app,
+                                 help='Show built-in default values')
 
         self.parser.add_argument('action', nargs=1, type=str,
                                  help='actions: start, stop')
