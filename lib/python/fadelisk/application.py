@@ -41,7 +41,7 @@ class Application(Daemon):
     """
 
     default_conf = {
-        'server': 'fadelisk/1.0',
+        'server_header': 'fadelisk/1.0',
         'bind_address': '127.0.0.1',
         'listen_port': 1066,
         'process_user': 'nobody',

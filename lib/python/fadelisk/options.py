@@ -36,8 +36,8 @@ class Options(object):
                                  help='run server as this user')
         self.parser.add_argument('-o', '--errout', dest='stderr_file',
                                  help='direct stderr to this file')
-        self.parser.add_argument('--server', dest='server',
-                                 help='use this server in HTTP headers')
+        self.parser.add_argument('--server_header', dest='server_header',
+                                 help='server name/version for HTTP headers')
 
         self.parser.add_argument('action', nargs=1, type=str,
                                  help='actions: start, stop')

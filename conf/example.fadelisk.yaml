@@ -25,9 +25,10 @@
 #
 # log_level: 'warning'
 
-# SERVER ID: The name of the server software returned in response headers.
+# SERVER HEADER: The name and version of the server software returned in
+# response headers.
 #
-# server: 'fadelisk/1.0'
+# server_header: 'fadelisk/1.0'
 
 # DIRECTORY INDEX: When a directory path is requested, these document
 # names will be sought in order. This should be the normal way that

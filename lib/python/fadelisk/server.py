@@ -23,9 +23,9 @@ from .resource import SiteNotFoundResource
 
 
 class CustomServerSite(server.Site):
-    def __init__(self, resource, server_header):
-        self.server_header = server_header
+    def __init__(self, resource, app_conf={}):
         server.Site.__init__(self, resource)
+        self.server_header = app_conf.get('server_header', 'fadelisk/1.0')
 
     def getResourceFor(self, request):
         request.setHeader('server', self.server_header)
@@ -40,8 +40,7 @@ class FadeliskServer(object):
         self.vhost = vhost.NameVirtualHost()
         self.vhost.default=SiteNotFoundResource(self.app)
         self.gather_sites()
-        self.ubersite = CustomServerSite(self.vhost,
-                                         server_header=self.app.conf['server'])
+        self.ubersite = CustomServerSite(self.vhost, app.conf)
 
         reactor.listenTCP(self.app.conf['listen_port'], self.ubersite,
                           interface=self.app.conf['bind_address'])
