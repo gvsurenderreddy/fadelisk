@@ -21,6 +21,11 @@
 #
 # process_user: 'nobody'
 
+# RUN IN FOREGROUND: Normally upon starting, the server will "daemonize"
+# to run in the background. Set this to a true value to prevent this.
+#
+# run_in_foreground: 0
+
 # LOG LEVEL: Possible levels: error, warning, info, debug
 #
 # log_level: 'warning'

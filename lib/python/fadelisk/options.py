@@ -37,26 +37,47 @@ class Options(object):
             prog='fadelisk',
             description='A web server where all pages are templates.',
         )
-        self.parser.add_argument('-c', '--config', dest='conf_file',
-                                 help='specify a configuration file')
-        self.parser.add_argument('-b', '--bind', dest='bind_address',
-                                 help='bind address')
-        self.parser.add_argument('-p', '--port', dest='listen_port',
-                                 help='listen port')
-        self.parser.add_argument('-g', '--loglevel', dest='log_level',
-                                 help='log at: error, warning, info, debug')
-        self.parser.add_argument('-u', '--user', dest='process_user',
-                                 help='run server as this user')
-        self.parser.add_argument('-o', '--errout', dest='stderr_file',
-                                 help='direct stderr to this file')
-        self.parser.add_argument('--server-header', dest='server_header',
-                                 help='server name/version for HTTP headers')
+
+        self.parser.add_argument('-c', '--config',
+                                 help='specify a configuration file',
+                                 dest='conf_file')
+
+        self.parser.add_argument('-b', '--bind',
+                                 help='TCP bind address',
+                                 dest='bind_address')
+
+        self.parser.add_argument('-p', '--port',
+                                 help='TCP listen port',
+                                 dest='listen_port')
+
+        self.parser.add_argument('-g', '--loglevel',
+                                 help='log level',
+                                 choices=['error', 'warning', 'info', 'debug'],
+                                 dest='log_level')
+
+        self.parser.add_argument('-u', '--user',
+                                 help='run server as this user',
+                                 dest='process_user')
+
+        self.parser.add_argument('-f', '--foreground',
+                                 help='run server process in foreground',
+                                 dest='run_in_foreground', action='store_true')
+
+        self.parser.add_argument('-o', '--errout',
+                                 help='redirect stderr to a file',
+                                 dest='stderr_file')
+
+        self.parser.add_argument('--server-header',
+                                 help='server name/version for HTTP headers',
+                                 dest='server_header')
+
         self.parser.add_argument('--show-defaults',
-                                 action=ShowDefaultsAction, app=self.app,
-                                 help='Show built-in default values')
+                                 help='print built-in application defaults',
+                                 action=ShowDefaultsAction, app=self.app)
 
         self.parser.add_argument('action', nargs=1, type=str,
-                                 help='actions: start, stop')
+                                 choices=['start', 'stop', 'restart'],
+                                 help='start, stop, or restart the server')
 
     def get_args(self):
         """Get parsed command-line arguments

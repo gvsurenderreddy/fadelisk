@@ -48,6 +48,7 @@ class Application(Daemon):
         'bind_address': '127.0.0.1',
         'listen_port': 1066,
         'process_user': 'nobody',
+        'run_in_foreground': False,
         'log_level': 'warning',
         'site_collections': ['/srv/www/sites'],
         'directory_index': [ 'index.html', 'index.htm'],
@@ -96,10 +97,11 @@ class Application(Daemon):
         self.build_dispatch_table()
         try:
             action = self.dispatch_table[action]
+            action()
         except KeyError:
-            self.parser.print_help(file=sys.stderr)
+            self.log.error('Action "%s" is not implemented yet.' %
+                           self.args.action[0])
             sys.exit(2)
-        action()
 
     def build_dispatch_table(self):
         """Build the dispatch table actions specified on the command line."""
@@ -116,7 +118,8 @@ class Application(Daemon):
         Daemonizes, acquires a lockfile, sets process user, and runs
         the server.
         """
-        self.daemonize()
+        if not self.conf['run_in_foreground']:
+            self.daemonize()
 
         lock = Lockfile("fadelisk", user=self.conf['process_user'])
         try:
@@ -153,16 +156,6 @@ class Application(Daemon):
         """
         self.action_stop()
         self.action_start()
-
-    def action_not_implemented(self):
-        """Unimplemented action message
-
-        To support future development, prints a message about actions
-        that are present in the dispatcher but are not yet implemented.
-        """
-        self.log.error('Action "%s" is not implemented yet.' %
-                       self.args.action[0])
-        sys.exit(1)
 
     def load_conf(self):
         """Configuration loader
