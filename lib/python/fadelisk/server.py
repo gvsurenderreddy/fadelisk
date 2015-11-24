@@ -10,7 +10,6 @@ fast_reactors = {
 }
 
 # Import a faster reactor, if one is available
-platform_sys = platform.system()
 for fast_reactor, platform_systems in fast_reactors.iteritems():
     if platform.system() in platform_systems:
         tw_inet = __import__('twisted.internet', fromlist=[fast_reactor])
