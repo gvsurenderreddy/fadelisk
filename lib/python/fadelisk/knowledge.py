@@ -1,6 +1,11 @@
 
 from os.path import dirname, exists, join, realpath
 import yaml
+try:
+        from yaml import CLoader as YAMLLoader
+except ImportError:
+        from yaml import Loader as YAMLLoader
+
 from .conf import ConfYAML
 
 class KnowledgeNotFound(Exception): pass
@@ -27,7 +32,7 @@ class Knowledge(object):
             if not exists(filename):
                 continue
             with open(filename) as file_:
-                return yaml.load(file_, Loader=yaml.CLoader)
+                return yaml.load(file_, Loader=YAMLLoader)
         raise KnowledgeNotFound('There is no knowledge of %s' % name)
 
     def library_rel_path(self, name):
