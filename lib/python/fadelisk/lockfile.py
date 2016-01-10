@@ -35,7 +35,7 @@ class Lockfile(object):
 
     def acquire(self):
         if self.fd:
-            raise LockfileError("Lockfile %s already open this process" %
+            raise LockfileError("Lockfile %s already open by this process" %
                                self.filename)
         if self.has_exlock():
             raise LockfileLockedError(
@@ -44,17 +44,17 @@ class Lockfile(object):
         pwent = pwd.getpwnam(self.user)
 
         if not os.path.exists(self.path):
-            os.mkdir(self.path, 0o775)
+            os.mkdir(self.path)
         os.chown(self.path, pwent.pw_uid, pwent.pw_gid)
+        os.chmod(self.path, 0o755)
 
-        self.fd = os.open(self.filename, os.O_WRONLY | os.O_CREAT |
-                          os.O_TRUNC, 0o664)
+        self.fd = os.open(self.filename, os.O_WRONLY | os.O_CREAT | os.O_TRUNC)
         os.fchown(self.fd, pwent.pw_uid, pwent.pw_gid)
+        os.fchmod(self.fd, 0o644)
 
         try:
             self.lock = fcntl.lockf(self.fd, fcntl.LOCK_EX | fcntl.LOCK_NB)
         except:
-            self.lock = None
             os.close(self.fd)
             self.fd = None
             raise LockfileEstablishError("Could not establish lock %s" %
@@ -67,7 +67,7 @@ class Lockfile(object):
                 "Lockfile not locked by this process: %s" % self.filename)
         try:
             fcntl.lockf(self.fd, fcntl.LOCK_UN)
-        except Exception:
+        except:
             raise LockfileReleaseError(
                 'Unable to unlock lockfile %s' % self.filename)
         os.close(self.fd)
@@ -86,12 +86,9 @@ class Lockfile(object):
                 raise LockfileStaleError("Lockfile: stale lockfile")
             return 0
 
-        # This process is locking the file
         if pid == os.getpid():
             raise LockfileKillError("Lockfile: would terminate this process")
-
         os.kill(pid, sig)
-
         if wait:
             for interval in range(100):
                 if not os.path.exists(self.filename):
@@ -101,14 +98,15 @@ class Lockfile(object):
                 "Timeout while waiting for process to exit")
 
     def has_exlock(self):
-        try:
-            with open(self.filename, "r") as lockfile:
-                try:
-                    lock = fcntl.lockf(lockfile, fcntl.LOCK_EX | fcntl.LOCK_NB)
-                except:
-                    return True
-        except:
+        if not os.path.exists(self.filename):
             return False
+
+        with open(self.filename) as f:
+            try:
+                fcntl.lockf(f.fileno(), fcntl.LOCK_EX | fcntl.LOCK_NB)
+            except:
+                return True
+        return False
 
     def get_pid(self):
         try:
