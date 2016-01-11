@@ -11,8 +11,8 @@ from .daemon import Daemon
 from .options import Options
 from .server import FadeliskServer
 from .logger import Logger
-from .lockfile import Lockfile, LockfileOpenError, LockfileEstablishError, \
-        LockfileStaleError, LockfileLockedError
+from .lockfile import Lockfile, LockfileProcessNotRunningError, \
+        LockfileLockedError
 from .conf import ConfDict, ConfYAML, ConfStack, ConfHunterFactory
 from .conf import ConfNotFoundError
 
@@ -97,11 +97,11 @@ class Application(Daemon):
         self.build_dispatch_table()
         try:
             action = self.dispatch_table[action]
-            action()
         except KeyError:
             self.log.error('Action "%s" is not implemented yet.' %
                            self.args.action[0])
             sys.exit(2)
+        action()
 
     def build_dispatch_table(self):
         """Build the dispatch table actions specified on the command line."""
@@ -144,10 +144,8 @@ class Application(Daemon):
         lock = Lockfile("fadelisk")
         try:
             lock.kill_process()
-        except LockfileStaleError:
-            sys.exit("Lockfile stale, removing")
-        except LockfileOpenError:
-            sys.exit("No lockfile present")
+        except LockfileProcessNotRunningError:
+            sys.exit('Process is not running')
 
     def action_restart(self):
         """Stop and start the server

@@ -9,14 +9,11 @@ import fcntl
 import signal
 import time
 
-class LockfileError(Exception): pass
-class LockfileOpenError(Exception): pass
-class LockfileLockedError(Exception): pass
-class LockfileStaleError(Exception): pass
 class LockfileEstablishError(Exception): pass
-class LockfileReleaseError(Exception): pass
 class LockfileKillError(Exception): pass
 class LockfileKillTimeoutError(Exception): pass
+class LockfileLockedError(Exception): pass
+class LockfileProcessNotRunningError(Exception): pass
 
 class Lockfile(object):
     def __init__(self, dir_name, instance_name=None, user='nobody'):
@@ -35,8 +32,7 @@ class Lockfile(object):
 
     def acquire(self):
         if self.fd:
-            raise LockfileError("Lockfile %s already open by this process" %
-                               self.filename)
+            return
         if self.has_exlock():
             raise LockfileLockedError(
                 'Lock file already locked by PID %s' % self.get_pid())
@@ -63,39 +59,33 @@ class Lockfile(object):
 
     def release(self):
         if not self.fd:
-            raise LockfileReleaseError(
-                "Lockfile not locked by this process: %s" % self.filename)
-        try:
-            fcntl.lockf(self.fd, fcntl.LOCK_UN)
-        except:
-            raise LockfileReleaseError(
-                'Unable to unlock lockfile %s' % self.filename)
+            return
+
+        fcntl.lockf(self.fd, fcntl.LOCK_UN)
         os.close(self.fd)
         os.remove(self.filename)
 
     def kill_process(self, sig=signal.SIGTERM, wait=True):
-        pid = self.get_pid()
-        if not pid:
-            print('Process is not running')
-            return
+        if not os.path.exists(self.filename):
+            raise LockfileProcessNotRunningError("Process is not running")
 
         if not self.has_exlock():
-            try:
-                os.remove(self.filename)
-            except:
-                raise LockfileStaleError("Lockfile: stale lockfile")
-            return 0
+            os.remove(self.filename)
+            return
 
+        pid = self.get_pid()
         if pid == os.getpid():
             raise LockfileKillError("Lockfile: would terminate this process")
         os.kill(pid, sig)
-        if wait:
-            for interval in range(100):
-                if not os.path.exists(self.filename):
-                    return
-                time.sleep(.1)
-            raise LockfileKillTimeoutError(
-                "Timeout while waiting for process to exit")
+
+        if not wait:
+            return
+        for i in range(1,13):
+            if not os.path.exists(self.filename):
+                return
+            time.sleep(2**i/1000.)
+        raise LockfileKillTimeoutError(
+            "Timeout while waiting for process to exit")
 
     def has_exlock(self):
         if not os.path.exists(self.filename):
@@ -109,9 +99,6 @@ class Lockfile(object):
         return False
 
     def get_pid(self):
-        try:
-            with open(self.filename, "r") as lockfile:
-                return int(lockfile.read())
-        except:
-            return 0
+        with open(self.filename, "r") as lockfile:
+            return int(lockfile.read())
 
