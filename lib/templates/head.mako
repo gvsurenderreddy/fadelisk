@@ -53,23 +53,38 @@
 </%def>
 
 <%def name="local_fonts(uri='/fonts')">
+    <style type="text/css">
+        ${local_fonts_content(uri)}
+    </style>
+</%def>
+
+<%def name="local_fonts_content(uri='/fonts')">
     <%
         fonts = list(site.conf.get('local_fonts') or [])
         fonts.extend(request_data.get('extra_local_fonts') or [])
         if not fonts:
             return ''
     %>
-    <style type="text/css">
-        % for font in fonts:
-            @font-face {
-                font-family: '${font}';
-                font-style: normal;
-                font-weight: normal;
-                src: local('${font}'),
-                     url('${uri}/${font}.woff') format('woff');
-            }
-        % endfor
-    </style>
+    % for font in fonts:
+        <%
+            local = font.split('/')
+            specparts = local.pop(0).split(':')
+            filename = specparts.pop(0)
+            local.append(filename)
+
+            spec = dict(enumerate(specparts))
+            weight = spec.get(0, 400)
+            style = spec.get(1, 'normal')
+            family = spec.get(2, filename)
+        %>
+        @font-face {
+            font-family: '${family}';
+            font-weight: ${weight};
+            font-style: ${style};
+            src: ${', '.join(['local(%s)' % f for f in local])},
+                url('${uri}/${filename}.woff2') format('woff2');
+        }
+    % endfor
 </%def>
 
 <%def name="google_fonts(uri='http://fonts.googleapis.com/css?family=')">
