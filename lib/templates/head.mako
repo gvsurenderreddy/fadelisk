@@ -81,8 +81,8 @@
             font-family: '${family}';
             font-weight: ${weight};
             font-style: ${style};
-            src: ${', '.join(['local(%s)' % f for f in local])},
-                url('${uri}/${filename}.woff2') format('woff2');
+            src: ${', '.join(["local('%s')" % f for f in local])},
+                url(${uri}/${filename}.woff2) format('woff2');
         }
     % endfor
 </%def>
