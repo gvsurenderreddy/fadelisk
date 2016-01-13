@@ -87,11 +87,14 @@
     % endfor
 </%def>
 
-<%def name="google_fonts(uri='http://fonts.googleapis.com/css?family=')">
-    % for font in site.conf.get('google_fonts', []):
-        <link href="${uri}${font.replace(' ', '+')}" rel="stylesheet"
-              type="text/css" />
-    % endfor
+<%def name="google_fonts(uri='https://fonts.googleapis.com/css?family=')">
+    <%
+        fonts = site.conf.get('google_fonts', [])
+        if not fonts:
+            return ''
+    %>
+    <link href="${uri}${'|'.join([f.replace(' ', '+') for f in fonts])}"
+        rel="stylesheet" type="text/css" />
 </%def>
 
 <%def name="rss_feed(uri='/rss/', title='RSS Feed')">
