@@ -16,7 +16,7 @@ class Knowledge(object):
 
         self.dirs = []
         possible_dirs = [
-            self.library_rel_path('knowledge'),
+            self.site.app.rel_path('lib', 'knowledge'),
             site.rel_path('lib', 'knowledge'),
             site.rel_path('knowledge'),
             '/usr/local/lib/fadelisk/knowledge',
@@ -34,9 +34,4 @@ class Knowledge(object):
             with open(filename) as file_:
                 return yaml.load(file_, Loader=YAMLLoader)
         raise KnowledgeNotFound('There is no knowledge of %s' % name)
-
-    def library_rel_path(self, name):
-        my_path = dirname(realpath(__file__))
-        library_dir = dirname(dirname(my_path))
-        return join(library_dir, name)
 
