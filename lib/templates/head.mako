@@ -54,7 +54,7 @@
 
 <%def name="fonts(uri='/fonts')">
     <%
-        content = fonts_content(uri)
+        content = capture(fonts_content, uri)
         if not content:
             return ''
     %>
