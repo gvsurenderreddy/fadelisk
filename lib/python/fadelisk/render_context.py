@@ -23,7 +23,7 @@ request_data_reset_values = {
     #   template to allow inheriting pages to add additional content.
     #   To use these, your top-level template must capture next.body
     #   before emitting the document head.
-    'extra_local_fonts': [],
+    'extra_fonts': [],
     'extra_google_fonts': [],
     'extra_stylesheets': [],
     'extra_screen_stylesheets': [],

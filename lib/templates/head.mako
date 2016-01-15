@@ -11,7 +11,7 @@
             ${title_utils.breadcrumbs(no_links=True, no_home_link=True)}
         </title>
         ${stylesheets()}
-        ${local_fonts()}
+        ${fonts()}
         ${google_fonts()}
         ${scripts()}
         ${rss_feed()}
@@ -52,20 +52,25 @@
     % endfor
 </%def>
 
-<%def name="local_fonts(uri='/fonts')">
+<%def name="fonts(uri='/fonts')">
+    <%
+        content = fonts_content(uri)
+        if not content:
+            return ''
+    %>
     <style type="text/css">
-        ${local_fonts_content(uri)}
+        ${content}
     </style>
 </%def>
 
-<%def name="local_fonts_content(uri='/fonts')">
+<%def name="fonts_content(uri='/fonts')">
     <%
-        fonts = list(site.conf.get('local_fonts') or [])
-        fonts.extend(request_data.get('extra_local_fonts') or [])
-        if not fonts:
+        fonts_ = list(site.conf.get('fonts') or [])
+        fonts_.extend(request_data.get('extra_fonts') or [])
+        if not fonts_:
             return ''
     %>
-    % for font in fonts:
+    % for font in fonts_:
         <%
             local = font.split('/')
             specparts = local.pop(0).split(':')
