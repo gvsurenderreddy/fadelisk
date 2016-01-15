@@ -92,14 +92,14 @@
         fonts = site.conf.get('google_fonts', [])
         if not fonts:
             return ''
+        stylesheet = uri + '|'.join([f.replace(' ', '+') for f in fonts])
     %>
-    <link href="${uri}${'|'.join([f.replace(' ', '+') for f in fonts])}"
-        rel="stylesheet" type="text/css" />
+    <link href="${stylesheet}" rel="stylesheet" type="text/css" />
 </%def>
 
-<%def name="rss_feed(uri='/rss/', title='RSS Feed')">
-    <link rel="alternate" type="application/rss+xml" title="${title}"
-          href="${uri}" /> 
+<%def name="rss_feed(uri='/rss/', title='RSS Feed',
+    mime_type='application/rss+xml')">
+    <link rel="alternate" type="${mime_type}" title="${title}" href="${uri}" /> 
 </%def>
 
 <%def name="extra_head_content()">
