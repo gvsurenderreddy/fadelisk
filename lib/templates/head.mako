@@ -72,22 +72,23 @@
     %>
     % for font in fonts_:
         <%
-            local = font.split('/')
-            specparts = local.pop(0).split(':')
-            filename = specparts.pop(0)
-            local.append(filename)
+            spec = dict(enumerate(font.split(':')))
 
-            spec = dict(enumerate(specparts))
-            weight = spec.get(0, 400)
-            style = spec.get(1, 'normal')
-            family = spec.get(2, filename)
+            family = spec[0]
+            style = spec.get(1) or 'normal'
+            weight = spec.get(2) or  '400'
+            locals_ = (spec.get(3) or family).split(',')
+            format_ = spec.get(4) or 'woff2'
+
+            filename = locals_[0]
+            locals_[0] = locals_[0].split('/')[-1]
         %>
         @font-face {
             font-family: '${family}';
-            font-weight: ${weight};
             font-style: ${style};
-            src: ${', '.join(["local('%s')" % f for f in local])},
-                url(${uri}/${filename}.woff2) format('woff2');
+            font-weight: ${weight};
+            src: ${', '.join(["local('%s')" % f for f in locals_])},
+                url(${uri}/${filename}.${format_}) format('${format_}');
         }
     % endfor
 </%def>
